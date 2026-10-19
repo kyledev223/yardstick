@@ -299,14 +299,17 @@ export function LaunchForm() {
             This creates a real coin on <strong className="font-semibold text-ink">Solana mainnet</strong> with real SOL. You pay only the network fee and pump.fun&apos;s creation cost
             {devBuySol > 0 ? ", plus your dev buy" : ""}, about {(LAUNCH.createCostSol + devBuySol * 1.01).toFixed(3)} SOL in total. Yardstick charges nothing.
           </p>
-          <button
-            type="submit"
-            disabled={busy || devBuySol > LAUNCH.devBuyMaxSol || devBuySol < 0}
-            className="btn btn-primary btn-lg w-full sm:w-auto"
-          >
-            {busy && <Loader2 size={18} className="animate-spin" aria-hidden />}
-            {!publicKey ? "Connect wallet to launch" : busy ? PHASES.find((p) => p.key === phase)?.label ?? "Working…" : error ? "Try again" : "Launch coin"}
-          </button>
+          {/* Without a wallet this is a plain button, so it opens the wallet picker even while the form is still empty. */}
+          {!publicKey ? (
+            <button type="button" onClick={() => setWalletOpen(true)} className="btn btn-primary btn-lg w-full sm:w-auto">
+              Connect wallet to launch
+            </button>
+          ) : (
+            <button type="submit" disabled={busy || devBuySol > LAUNCH.devBuyMaxSol || devBuySol < 0} className="btn btn-primary btn-lg w-full sm:w-auto">
+              {busy && <Loader2 size={18} className="animate-spin" aria-hidden />}
+              {busy ? (PHASES.find((p) => p.key === phase)?.label ?? "Working…") : error ? "Try again" : "Launch coin"}
+            </button>
+          )}
 
           {(busy || phase === "done") && (
             <ol className="space-y-2 text-sm" aria-live="polite">
