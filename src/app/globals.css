@@ -1,0 +1,516 @@
+@import "tailwindcss";
+
+/*
+ * Yardstick design tokens. One place for colour, type, space, shape and motion.
+ * Light (default): warm grey page, deep teal-black ink, teal accent.
+ * Dark: deep teal-black page, warm light text, same accents.
+ * Contrast of every text/data pair is checked in tests/design-tokens.test.ts.
+ */
+
+/* ---- Colour: light (default) ---- */
+:root {
+  /* surfaces */
+  --page: #e8e5df; /* page background */
+  --surface: #ffffff; /* cards, panels, inputs */
+  --soft: #f5f3ef; /* footer bar, quiet panels */
+  --sunk: #dcd8cc; /* chips, tracks, alternate sections */
+  /* text */
+  --ink: #071b1f; /* body text, headings */
+  --muted: #3d4c4f; /* secondary text */
+  --faint: #4b595c; /* tertiary text, still AA on every surface */
+  /* lines */
+  --rule: #cfcabd; /* decorative dividers */
+  --rule-strong: #76736a; /* input borders and other boundaries that must read (3:1) */
+  /* brand */
+  --teal: #299093; /* large elements, fills, accents; white text on it only at large sizes */
+  --teal-ink: #17676a; /* links and small teal text */
+  --yellow: #ffbd00; /* highlight only */
+  --coral: #ef6156; /* highlight only */
+  --stone: #8f8c83; /* neutral highlight pill */
+  --on-pill: #071b1f; /* text on yellow, coral, stone pills (both themes) */
+  --on-teal: #ffffff; /* text on teal pills: display sizes only */
+  --btn: #17676a; /* primary button fill */
+  --on-btn: #ffffff;
+  --focus: #17676a;
+  /* data */
+  --data-you: #1c7a7d; /* "your coin" lines, bars, markers */
+  --data-median: #3d4c4f; /* median marker */
+  --data-range: #e3dfd4; /* comparison range band on white surfaces */
+  --data-range-strong: #cfc9b9; /* middle half of the range */
+  --up: #16683b;
+  --down: #b3263a;
+  /* cursor field glyphs: barely off the page colour so they blend in */
+  --field-dot: #f5f3ef;
+  --field-square: #dcd8cc;
+  --field-plus: #299093;
+  color-scheme: light;
+}
+
+/* ---- Colour: dark. Two identical blocks (system preference and explicit choice); the test keeps them in sync. ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #071a1d;
+    --surface: #0e2427;
+    --soft: #0b1f22;
+    --sunk: #142c30;
+    --ink: #ece8e0;
+    --muted: #bcc0b9;
+    --faint: #9aa19c;
+    --rule: #20383c;
+    --rule-strong: #6c8286;
+    --teal: #299093;
+    --teal-ink: #5ec4c6;
+    --yellow: #ffbd00;
+    --coral: #ef6156;
+    --stone: #8f8c83;
+    --on-pill: #071b1f;
+    --on-teal: #ffffff;
+    --btn: #5ec4c6;
+    --on-btn: #071b1f;
+    --focus: #5ec4c6;
+    --data-you: #4fbdc0;
+    --data-median: #c9cbc4;
+    --data-range: #173135;
+    --data-range-strong: #22423f;
+    --up: #5fd08f;
+    --down: #ff8591;
+    --field-dot: #102629;
+    --field-square: #132a2e;
+    --field-plus: #1f7376;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --page: #071a1d;
+  --surface: #0e2427;
+  --soft: #0b1f22;
+  --sunk: #142c30;
+  --ink: #ece8e0;
+  --muted: #bcc0b9;
+  --faint: #9aa19c;
+  --rule: #20383c;
+  --rule-strong: #6c8286;
+  --teal: #299093;
+  --teal-ink: #5ec4c6;
+  --yellow: #ffbd00;
+  --coral: #ef6156;
+  --stone: #8f8c83;
+  --on-pill: #071b1f;
+  --on-teal: #ffffff;
+  --btn: #5ec4c6;
+  --on-btn: #071b1f;
+  --focus: #5ec4c6;
+  --data-you: #4fbdc0;
+  --data-median: #c9cbc4;
+  --data-range: #173135;
+  --data-range-strong: #22423f;
+  --up: #5fd08f;
+  --down: #ff8591;
+  --field-dot: #102629;
+  --field-square: #132a2e;
+  --field-plus: #1f7376;
+  color-scheme: dark;
+}
+
+/* ---- Space, shape, motion, cursor field (theme-independent) ---- */
+:root {
+  --gutter: 1rem; /* outer page gutter: 16px on phones */
+  --gutter-inner: 1rem; /* gap between grid columns */
+  --section-sm: clamp(3rem, 2rem + 4vw, 6rem);
+  --section-md: clamp(4.5rem, 2.5rem + 8vw, 10rem);
+  --section-lg: clamp(6rem, 3rem + 12vw, 15rem);
+
+  --dur-fast: 150ms; /* hovers, colour changes */
+  --dur-base: 300ms; /* small state changes */
+  --dur-slow: 600ms; /* pill wipes, bars growing */
+  --dur-reveal: 800ms; /* headline and wordmark reveals */
+  --stagger: 60ms; /* delay between items in a reveal */
+
+  --field-cell: 32px; /* glyph grid pitch */
+  --field-glyph: 14px; /* glyph size inside a cell */
+  --field-strength: 1; /* 1 = landing hero; data pages set a lower value */
+  --field-strength-data: 0.35;
+}
+@media (min-width: 768px) {
+  :root {
+    --gutter: 2rem;
+    --gutter-inner: 1.5rem;
+  }
+}
+
+/* ---- Tailwind theme: exposes the tokens as utilities (bg-page, text-muted, text-display, rounded-card…) ---- */
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-soft: var(--soft);
+  --color-sunk: var(--sunk);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-teal: var(--teal);
+  --color-teal-ink: var(--teal-ink);
+  --color-yellow: var(--yellow);
+  --color-coral: var(--coral);
+  --color-stone: var(--stone);
+  --color-on-pill: var(--on-pill);
+  --color-on-teal: var(--on-teal);
+  --color-btn: var(--btn);
+  --color-on-btn: var(--on-btn);
+  --color-focus: var(--focus);
+  --color-data-you: var(--data-you);
+  --color-data-median: var(--data-median);
+  --color-data-range: var(--data-range);
+  --color-data-range-strong: var(--data-range-strong);
+  --color-up: var(--up);
+  --color-down: var(--down);
+
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace; /* wallet addresses and signatures only */
+
+  /* type scale: size / line-height / tracking / weight */
+  --text-giant: clamp(4.5rem, 1rem + 15vw, 16rem);
+  --text-giant--line-height: 0.85;
+  --text-giant--letter-spacing: -0.045em;
+  --text-giant--font-weight: 800;
+  --text-display: clamp(2.25rem, 1.1rem + 4.6vw, 5rem);
+  --text-display--line-height: 1.12;
+  --text-display--letter-spacing: -0.04em;
+  --text-display--font-weight: 800;
+  --text-headline: clamp(1.75rem, 1.2rem + 2.2vw, 2.75rem);
+  --text-headline--line-height: 1.15;
+  --text-headline--letter-spacing: -0.03em;
+  --text-headline--font-weight: 700;
+  --text-title: clamp(1.25rem, 1.05rem + 0.8vw, 1.75rem);
+  --text-title--line-height: 1.25;
+  --text-title--letter-spacing: -0.02em;
+  --text-title--font-weight: 600;
+  --text-lead: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --text-lead--line-height: 1.5;
+  --text-micro: 0.8125rem;
+  --text-micro--line-height: 1.4;
+  --text-figure-hero: clamp(5rem, 2.5rem + 11vw, 11rem);
+  --text-figure-hero--line-height: 0.85;
+  --text-figure-hero--letter-spacing: -0.05em;
+  --text-figure-hero--font-weight: 800;
+  --text-figure: clamp(1.75rem, 1.45rem + 1.1vw, 2.5rem);
+  --text-figure--line-height: 1.05;
+  --text-figure--letter-spacing: -0.03em;
+  --text-figure--font-weight: 700;
+
+  --spacing-gutter: var(--gutter);
+  --spacing-gutter-inner: var(--gutter-inner);
+  --spacing-section-sm: var(--section-sm);
+  --spacing-section-md: var(--section-md);
+  --spacing-section-lg: var(--section-lg);
+
+  --container-page: 90rem; /* widest content row (1440px) */
+  --container-wide: 72rem;
+  --container-narrow: 48rem; /* forms */
+  --container-measure: 36rem; /* running text */
+
+  --radius-xs: 0.5rem; /* small chips inside tables */
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem; /* inputs */
+  --radius-lg: 1.5rem; /* cards */
+  --radius-xl: 2.5rem; /* large panels */
+  --radius-2xl: 4.5rem; /* hero shapes */
+  --radius-card: 1.5rem;
+  --radius-pill: 9999px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* fast start, long soft landing */
+  --ease-in-out: cubic-bezier(0.65, 0.05, 0.35, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---- Base ---- */
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--page);
+}
+
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  text-underline-offset: 0.18em;
+}
+
+/* Figures: Figtree's tabular digits so columns line up. */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Wallet addresses, mints and signatures: monospace so 1/l and 0/O stay distinct. */
+.addr {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  letter-spacing: 0;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--yellow);
+  color: var(--on-pill);
+}
+
+/* ---- Components ---- */
+@layer components {
+  /* Highlight pill around words in a headline. Bold on the landing page, sparing on data pages. */
+  .pill {
+    display: inline-block;
+    padding-inline: 0.22em;
+    padding-block: 0 0.08em; /* room for descenders (g, p, y) */
+    margin-block: 0.04em;
+    border-radius: var(--radius-pill);
+    line-height: 1.18;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .pill-teal {
+    background: var(--teal);
+    color: var(--on-teal); /* 3.8:1, so display sizes only */
+  }
+  .pill-ink {
+    background: var(--ink);
+    color: var(--page);
+  }
+  .pill-plain {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--rule);
+  }
+  .pill-yellow {
+    background: var(--yellow);
+    color: var(--on-pill);
+  }
+  .pill-coral {
+    background: var(--coral);
+    color: var(--on-pill);
+  }
+  .pill-stone {
+    background: var(--stone);
+    color: var(--on-pill);
+  }
+
+  /* Small rounded tag. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    min-height: 1.75rem;
+    padding-inline: 0.75rem;
+    border-radius: var(--radius-pill);
+    background: var(--sunk);
+    color: var(--ink);
+    font-size: var(--text-micro);
+    line-height: 1.2;
+  }
+
+  /* Buttons: pill-shaped, at least 44px tall. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5em;
+    min-height: 2.75rem;
+    padding-inline: 1.25rem;
+    border-radius: var(--radius-pill);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    transition:
+      background-color var(--dur-fast) var(--ease-standard),
+      color var(--dur-fast) var(--ease-standard),
+      box-shadow var(--dur-fast) var(--ease-standard);
+  }
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--btn);
+    color: var(--on-btn);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--btn) 85%, var(--ink));
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1.5px var(--ink);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--surface);
+  }
+  .btn-lg {
+    min-height: 3.5rem;
+    padding-inline: 1.75rem;
+    font-size: 1.125rem;
+  }
+}
+
+/* ---- Forms, controls, loading ---- */
+@layer components {
+  .label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+  /* Text inputs, selects and textareas: 48px tall, clear border, obvious focus (global ring). */
+  .field {
+    display: block;
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.625rem 1rem;
+    border: 1.5px solid var(--rule-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 1rem;
+    transition: border-color var(--dur-fast) var(--ease-standard);
+  }
+  .field::placeholder {
+    color: var(--faint);
+  }
+  .field:hover {
+    border-color: var(--ink);
+  }
+  .field[aria-invalid="true"] {
+    border-color: var(--down);
+  }
+  textarea.field {
+    min-height: 6.5rem;
+    resize: vertical;
+  }
+
+  /* Segmented control: a row of pill buttons, the chosen one filled with ink. */
+  .seg {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--sunk);
+  }
+  .seg > button {
+    min-height: 2.5rem;
+    padding-inline: 1rem;
+    border-radius: var(--radius-pill);
+    color: var(--muted);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    transition:
+      background-color var(--dur-fast) var(--ease-standard),
+      color var(--dur-fast) var(--ease-standard);
+  }
+  .seg > button:hover {
+    color: var(--ink);
+  }
+  .seg > button[aria-checked="true"] {
+    background: var(--ink);
+    color: var(--page);
+  }
+
+  /* Loading placeholder: a soft rounded block with a slow sheen. Never holds numbers. */
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background: var(--sunk);
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--surface) 55%, transparent), transparent);
+    transform: translateX(-100%);
+    animation: sweep 1.6s ease-in-out infinite;
+  }
+}
+@keyframes sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* ---- Motion ---- */
+
+/* Headline pills wipe in from the left, then their words settle. */
+.reveal-pill {
+  animation: pill-wipe var(--dur-slow) var(--ease-out) both;
+  animation-delay: var(--delay, 0ms);
+}
+@keyframes pill-wipe {
+  from {
+    clip-path: inset(0 100% 0 0 round 9999px);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 9999px);
+  }
+}
+.reveal-word {
+  animation: rise var(--dur-base) var(--ease-out) both;
+  animation-delay: var(--delay, 0ms);
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.2em);
+  }
+}
+
+/* Percentile bars grow in once; the marker slides to its place. */
+.grow-in {
+  transform-origin: left;
+  animation: grow var(--dur-slow) var(--ease-out) both;
+}
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+.slide-in {
+  animation: slide var(--dur-slow) var(--ease-out) both;
+}
+@keyframes slide {
+  from {
+    left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
