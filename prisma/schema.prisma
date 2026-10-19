@@ -1,0 +1,287 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum CoinSource {
+  yardstick
+  baseline
+  external
+}
+
+enum LaunchStatus {
+  pending // metadata uploaded, nothing built yet
+  built // transaction built and simulated
+  relayed // signed transaction sent to the network
+  confirmed // coin exists on-chain and in our DB
+  failed
+  expired
+}
+
+model User {
+  id        String    @id @default(cuid())
+  wallet    String    @unique
+  createdAt DateTime  @default(now())
+  sessions  Session[]
+  launches  Launch[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AuthNonce {
+  nonce     String    @id
+  wallet    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([expiresAt])
+}
+
+model Launch {
+  id                   String       @id @default(cuid())
+  userId               String
+  user                 User         @relation(fields: [userId], references: [id])
+  wallet               String
+  status               LaunchStatus @default(pending)
+  errorCode            String?
+  reason               String?
+  name                 String
+  symbol               String
+  description          String
+  twitter              String?
+  telegram             String?
+  website              String?
+  imageUri             String?
+  metadataUri          String
+  devBuyLamports       BigInt       @default(0)
+  mint                 String?      @unique
+  signature            String?      @unique
+  blockhash            String?
+  lastValidBlockHeight BigInt?
+  relayedAt            DateTime?
+  confirmedAt          DateTime?
+  coinId               String?      @unique
+  coin                 Coin?        @relation(fields: [coinId], references: [id])
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status, updatedAt])
+}
+
+model Coin {
+  id               String      @id @default(cuid())
+  mint             String      @unique
+  bondingCurve     String
+  source           CoinSource
+  creator          String
+  name             String
+  symbol           String
+  nameKey          String // lowercase letters/digits only, for collision checks
+  uri              String?
+  imageUrl         String?
+  description      String?
+  twitter          String?
+  telegram         String?
+  website          String?
+  descLength       Int?
+  metaFetchedAt    DateTime?
+  createdAt        DateTime // on-chain creation time
+  createSlot       BigInt?
+  tokenProgram     String?
+  devBuyLamports   BigInt?
+  graduatedAt      DateTime?
+  peakMcapSol      Float?
+  bestPercentile   Float? // best composite percentile vs baseline at any fixed age
+  trackingUntil    DateTime
+  trackingStopped  Boolean     @default(false)
+  lastViewedAt     DateTime?
+  enrolledAt       DateTime    @default(now())
+  launch           Launch?
+  snapshots        Snapshot[]
+  cursor           TradeCursor?
+  trades           Trade[]
+  milestones       Milestone[]
+
+  @@index([source, createdAt])
+  @@index([creator])
+  @@index([symbol])
+  @@index([createdAt])
+  @@index([trackingStopped, source])
+}
+
+model Snapshot {
+  id                String   @id @default(cuid())
+  coinId            String
+  coin              Coin     @relation(fields: [coinId], references: [id], onDelete: Cascade)
+  ageBucket         String // "5m" … "7d", or "latest"
+  ageSeconds        Int // actual age when taken
+  takenAt           DateTime
+  holders           Int?
+  uniqueBuyers      Int?
+  buys              Int?
+  sells             Int?
+  buySol            Float?
+  sellSol           Float?
+  netInflowSol      Float?
+  buySellCountRatio Float?
+  buySellSolRatio   Float?
+  curveProgress     Float? // 0–100
+  mcapSol           Float?
+  top10Pct          Float?
+  devHoldPct        Float?
+  devSold           Boolean?
+  devSoldSol        Float?
+  devSoldPct        Float?
+  sniperPct         Float?
+  freshWalletPct    Float?
+  freshSampled      Int?
+  tradesCounted     Int?
+  tradesCapped      Boolean  @default(false)
+  graduated         Boolean  @default(false)
+  percentile        Float? // composite percentile vs baseline, when computable
+
+  @@unique([coinId, ageBucket])
+  @@index([ageBucket, takenAt])
+}
+
+model TradeCursor {
+  coinId           String    @id
+  coin             Coin      @relation(fields: [coinId], references: [id], onDelete: Cascade)
+  paginationToken  String? // getTransactionsForAddress cursor (Helius)
+  lastSignature    String? // getSignaturesForAddress cursor (standard RPC)
+  lastSlot         BigInt?
+  tradeCount       Int       @default(0)
+  capped           Boolean   @default(false)
+  caughtUpAt       DateTime?
+  updatedAt        DateTime  @updatedAt
+}
+
+// Raw trades, kept only while a coin is tracked (pruned after 7 days).
+model Trade {
+  id        String   @id @default(cuid())
+  coinId    String
+  coin      Coin     @relation(fields: [coinId], references: [id], onDelete: Cascade)
+  signature String
+  idx       Int // event index within the transaction
+  slot      BigInt
+  blockTime DateTime
+  user      String
+  isBuy     Boolean
+  lamports  BigInt
+  tokens    BigInt
+  vSol      BigInt
+  vTokens   BigInt
+  rSol      BigInt
+  rTokens   BigInt
+
+  @@unique([signature, idx])
+  @@index([coinId, blockTime])
+  @@index([coinId, user])
+}
+
+model Milestone {
+  id     String   @id @default(cuid())
+  coinId String
+  coin   Coin     @relation(fields: [coinId], references: [id], onDelete: Cascade)
+  kind   String // holders50 | curve25 | curve50 | graduated
+  at     DateTime
+
+  @@unique([coinId, kind])
+}
+
+model Distribution {
+  id             String   @id @default(cuid())
+  group          String // yardstick | baseline
+  ageBucket      String
+  metric         String
+  breakpoints    Float[] // p5, p10 … p95 (19 values)
+  sampleSize     Int
+  gradMedian     Float?
+  gradSampleSize Int      @default(0)
+  windowStart    DateTime
+  windowEnd      DateTime
+  computedAt     DateTime @default(now())
+
+  @@unique([group, ageBucket, metric])
+}
+
+// pump.fun creates seen per hour, and how many seconds of that hour discovery actually
+// covered. Rate = creates / coveredSeconds, so gaps between ticks don't skew it.
+model LaunchActivity {
+  hour           DateTime @id
+  creates        Int      @default(0)
+  coveredSeconds Int      @default(0)
+}
+
+model WalletAge {
+  wallet      String   @id
+  firstSeenAt DateTime?
+  txCount     Int
+  fresh       Boolean
+  checkedAt   DateTime @default(now())
+}
+
+model JobLock {
+  name        String   @id
+  owner       String
+  lockedUntil DateTime
+}
+
+model JobRun {
+  id         String    @id @default(cuid())
+  name       String
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  durationMs Int?
+  ok         Boolean   @default(false)
+  summary    Json?
+  error      String?
+
+  @@index([name, startedAt])
+}
+
+model RpcUsage {
+  day     String // YYYY-MM-DD (UTC)
+  host    String
+  credits Int    @default(0)
+  calls   Int    @default(0)
+  errors  Int    @default(0)
+
+  @@id([day, host])
+}
+
+model SolPrice {
+  id        String   @id @default(cuid())
+  usd       Float
+  source    String
+  fetchedAt DateTime @default(now())
+
+  @@index([fetchedAt])
+}
+
+model RateLimit {
+  key         String   @id
+  windowStart DateTime
+  count       Int
+}
+
+model KeyValue {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
