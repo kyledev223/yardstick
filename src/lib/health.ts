@@ -62,7 +62,8 @@ export async function healthReport() {
   });
   if (!(checks.pumpSdk as Check).ok) hints.push("The pump SDK failed to load. Check serverExternalPackages and the uuid override in package.json.");
 
-  // pump.fun IPFS reachable (any HTTP answer counts)
+  // pump.fun IPFS address answers (any HTTP answer counts). This does NOT prove uploads work:
+  // pump.fun has answered GET while failing every upload. Real upload results are in checks.metadataUpload.
   checks.pumpIpfs = await timed(async () => {
     const r = await fetch(PUMP_IPFS_URL, { method: "GET", signal: AbortSignal.timeout(6000) });
     return { status: r.status };
@@ -87,6 +88,28 @@ export async function healthReport() {
       db().rpcUsage.findMany({ where: { day: utcDay() } }),
       db().coin.groupBy({ by: ["source"], where: { createdAt: { gte: new Date(now - 7 * 86_400_000) } }, _count: true }),
     ]);
+    // Real image/metadata uploads made by launches (recorded in lib/launch/metadata.ts).
+    const [lastUpload, uploads24h] = await Promise.all([
+      db().jobRun.findFirst({ where: { name: "metadata-upload" }, orderBy: { startedAt: "desc" } }),
+      db().jobRun.groupBy({ by: ["ok"], where: { name: "metadata-upload", startedAt: { gte: new Date(now - 86_400_000) } }, _count: true }),
+    ]);
+    const lastSummary = (lastUpload?.summary ?? {}) as { provider?: "pump" | "pinata" | null; pumpFailed?: boolean };
+    checks.metadataUpload = {
+      pinataFallback: Boolean(env.pinataJwt),
+      last: lastUpload
+        ? { at: lastUpload.startedAt, minutesAgo: Math.round((now - lastUpload.startedAt.getTime()) / 60000), ok: lastUpload.ok, provider: lastSummary.provider ?? null, pumpFailed: Boolean(lastSummary.pumpFailed), error: lastUpload.error }
+        : null,
+      last24h: { ok: uploads24h.find((g) => g.ok)?._count ?? 0, failed: uploads24h.find((g) => !g.ok)?._count ?? 0 },
+    };
+    if (lastUpload && !lastUpload.ok)
+      hints.push(
+        env.pinataJwt
+          ? "The last image upload failed on both pump.fun and the Pinata fallback, so launches can't be prepared. Check the Pinata key and plan (details in checks.metadataUpload.last.error)."
+          : "The last image upload failed: pump.fun's upload service refused it and PINATA_JWT is not set, so there's no fallback. Launches can't be prepared until PINATA_JWT is set (free Pinata account).",
+      );
+    else if (lastUpload && lastSummary.pumpFailed) hints.push("pump.fun's upload service failed on the last launch; the Pinata fallback handled it.");
+    if (!env.pinataJwt && lastUpload?.ok !== false) hints.push("PINATA_JWT is not set, so image uploads depend on pump.fun's unofficial upload service alone. Set it (free Pinata account) so launches keep working when that service fails.");
+
     checks.solPrice = price ? { usd: price.usd, source: price.source, ageMinutes: Math.round((now - price.fetchedAt.getTime()) / 60000) } : null;
     if (!price) hints.push("No SOL price stored yet; it refreshes on the next tick. USD values are hidden until then.");
 
@@ -142,6 +165,8 @@ export async function healthReport() {
     if (used > env.rpcDailyBudget * 0.9) hints.push(`RPC usage today is ${used} of ${env.rpcDailyBudget} credits; baseline sampling has paused until tomorrow (UTC).`);
   }
 
-  const ok = dbOk && rpcs.some((r) => r.ok) && (checks.pumpSdk as Check).ok;
+  // A failing last upload means nobody can launch, so it counts against "ok".
+  const uploadsBroken = (checks.metadataUpload as { last: { ok: boolean } | null } | undefined)?.last?.ok === false;
+  const ok = dbOk && rpcs.some((r) => r.ok) && (checks.pumpSdk as Check).ok && !uploadsBroken;
   return { ok, network: "mainnet", checks, hints };
 }

@@ -1,6 +1,7 @@
 import "server-only";
 import sharp from "sharp";
 import { PUMP_IPFS_URL } from "../config";
+import { db } from "../db";
 import { env } from "../env";
 import { AppError } from "../errors";
 import { redact } from "../rpc";
@@ -76,18 +77,44 @@ async function uploadToPinata(image: Buffer, f: MetadataFields): Promise<{ metad
   return { metadataUri, imageUri };
 }
 
+/**
+ * Record a real upload attempt for /status (JobRun "metadata-upload"). Never breaks the upload itself.
+ * `error` is a short reason without URLs or keys.
+ */
+async function recordUpload(ok: boolean, summary: { provider: "pump" | "pinata" | null; pumpFailed: boolean; pinataTried: boolean }, error?: string) {
+  try {
+    const now = new Date();
+    await db().jobRun.create({ data: { name: "metadata-upload", startedAt: now, finishedAt: now, ok, summary, error: error ?? null } });
+  } catch {
+    // status bookkeeping only
+  }
+}
+
+const shortReason = (err: unknown) => redact(String((err as Error)?.message ?? err)).slice(0, 120);
+
 /** Upload image + metadata. pump.fun's IPFS endpoint first, Pinata as fallback. URIs are used exactly as returned. */
 export async function uploadMetadata(image: Buffer, f: MetadataFields) {
+  let pumpError: string;
   try {
-    return await uploadToPump(image, f);
+    const r = await uploadToPump(image, f);
+    await recordUpload(true, { provider: "pump", pumpFailed: false, pinataTried: false });
+    return r;
   } catch (err) {
-    console.warn("[metadata] pump.fun IPFS failed:", redact(String(err)));
-    if (!env.pinataJwt) throw new AppError("metadata-upload-failed", undefined, 502);
+    pumpError = shortReason(err);
+    console.warn("[metadata] pump.fun IPFS failed:", pumpError);
+    if (!env.pinataJwt) {
+      await recordUpload(false, { provider: null, pumpFailed: true, pinataTried: false }, `pump.fun: ${pumpError}; no Pinata fallback configured`);
+      throw new AppError("metadata-upload-failed", undefined, 502);
+    }
   }
   try {
-    return await uploadToPinata(image, f);
+    const r = await uploadToPinata(image, f);
+    await recordUpload(true, { provider: "pinata", pumpFailed: true, pinataTried: true }, `pump.fun: ${pumpError}`);
+    return r;
   } catch (err) {
-    console.warn("[metadata] Pinata failed:", redact(String(err)));
+    const pinataError = shortReason(err);
+    console.warn("[metadata] Pinata failed:", pinataError);
+    await recordUpload(false, { provider: null, pumpFailed: true, pinataTried: true }, `pump.fun: ${pumpError}; Pinata: ${pinataError}`);
     throw new AppError("metadata-upload-failed", undefined, 502);
   }
 }

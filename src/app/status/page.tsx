@@ -12,6 +12,7 @@ type Check = { ok: boolean; ms: number };
 type Tick = { minutesAgo: number; durationMs: number | null; ok: boolean; yardstickSnapshots: { due?: number; done?: number } | null; baselineSnapshots: { due?: number; done?: number } | null } | null;
 type Lut = { configured: false } | { configured: true; ok: boolean; frozen?: boolean } | null;
 type Usage = { creditsToday: number; budget: number; baselineDailyTarget: number; last7Days: { day: string; credits: number; calls: number; errors: number; baselineSampled: number }[] };
+type Upload = { pinataFallback: boolean; last: { minutesAgo: number; ok: boolean; provider: "pump" | "pinata" | null } | null; last24h: { ok: number; failed: number } };
 type Samples = { perAge: Record<"baseline" | "yardstick", Record<string, number>> };
 
 type State = "ok" | "problem" | "info";
@@ -45,7 +46,7 @@ export default async function StatusPage() {
   const db = c.database as Check;
   const rpc = (c.rpc as Check[]) ?? [];
   const sdk = c.pumpSdk as Check;
-  const ipfs = c.pumpIpfs as Check;
+  const upload = (c.metadataUpload as Upload | undefined) ?? null;
   const lut = c.lookupTable as Lut;
   const tick = (c.tick as Tick) ?? null;
   const dist = (c.distributions as { minutesAgo: number } | null) ?? null;
@@ -84,8 +85,21 @@ export default async function StatusPage() {
           <Card title="Launch builder" state={sdk?.ok ? "ok" : "problem"}>
             {sdk?.ok ? "pump.fun's software loads and can build a create transaction." : "Can't build launch transactions right now."}
           </Card>
-          <Card title="Image and metadata upload" state={ipfs?.ok ? "ok" : "problem"}>
-            {ipfs?.ok ? "pump.fun's upload service is reachable." : "pump.fun's upload service isn't reachable from the server."}
+          <Card title="Image and metadata upload" state={!upload?.last ? "info" : upload.last.ok ? "ok" : "problem"}>
+            {!upload?.last ? (
+              <>No launch has uploaded an image yet, so uploads haven&apos;t been tried. {upload?.pinataFallback ? "Pinata fallback is set up." : "No Pinata fallback is set up."}</>
+            ) : upload.last.ok ? (
+              <>
+                The last upload {ago(upload.last.minutesAgo)} worked{upload.last.provider === "pinata" ? " through the Pinata fallback, after pump.fun's service failed" : " through pump.fun"}.
+              </>
+            ) : (
+              <>The last upload {ago(upload.last.minutesAgo)} failed, so launches can&apos;t be prepared. {upload.pinataFallback ? "The Pinata fallback failed too." : "No Pinata fallback is set up."}</>
+            )}
+            {upload && (upload.last24h.ok > 0 || upload.last24h.failed > 0) && (
+              <span className="num mt-1 block">
+                Last 24 h: {upload.last24h.ok} worked, {upload.last24h.failed} failed.
+              </span>
+            )}
           </Card>
           <Card title="Dev-buy launches" state={!lut || !lut.configured ? "info" : lut.ok && lut.frozen ? "ok" : "problem"}>
             {!lut || !lut.configured

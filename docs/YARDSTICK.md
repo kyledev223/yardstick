@@ -19,7 +19,7 @@ Yardstick launches coins on pump.fun (Solana mainnet) from the creator's own wal
 | `SITE_URL` | Yes (prod) | Public URL; used in the wallet sign-in message and share images | `https://yardstick.vercel.app` | Your Vercel domain |
 | `CRON_SECRET` | Yes | Protects `/api/cron` | 64 hex characters | Generate (section 3) |
 | `PUMP_LOOKUP_TABLE` | Needed for dev buys | The site's frozen address lookup table | `7xKX…` | Create once at `/setup` (section 4) |
-| `PINATA_JWT` | Optional | Fallback for metadata uploads if pump.fun's IPFS endpoint is unreachable | `eyJhbGci…` | pinata.cloud → API Keys → New key (JWT) |
+| `PINATA_JWT` | Strongly recommended | Fallback for image/metadata uploads. pump.fun's upload service is unofficial and refused every upload in testing on 2026-10-19; without this, launches can't be prepared while it's down | `eyJhbGci…` | pinata.cloud → API Keys → New key (JWT) |
 | `COINGECKO_API_KEY` | Optional | SOL/USD from CoinGecko; Coinbase and Kraken are fallbacks | `CG-…` | coingecko.com → Developer dashboard (Demo, free) |
 | `RPC_DAILY_BUDGET` | Optional | RPC credits Yardstick may spend per UTC day (default 30000) | `30000` | Helius free = 1M/month ≈ 33k/day |
 | `BASELINE_DAILY_SAMPLE` | Optional | pump.fun coins sampled into the baseline per day (default 150) | `150` | Your choice; see section 7 |
@@ -84,7 +84,7 @@ Never commit secrets. `.env*` (except `.env.example`) and keypair files are giti
 | `image-invalid` | Image couldn't be decoded | PNG/JPEG/WebP/GIF under 4 MB |
 | `banned-word` | Name/symbol/description has a blocked word | `LAUNCH.bannedWords` in `src/lib/config.ts` |
 | `rate-limited` | Too many prepares per wallet/IP per hour, or too many new-coin lookups per IP | Limits in `src/lib/config.ts`; wait an hour |
-| `metadata-upload-failed` | pump.fun IPFS (and Pinata, if set) failed | `/api/health` → `pumpIpfs`; set `PINATA_JWT` as a fallback |
+| `metadata-upload-failed` | pump.fun's upload service (and Pinata, if set) refused the upload | `/status` → "Image and metadata upload" shows the last real upload; the reason is in `/api/health` → `checks.metadataUpload.last.error`. Set `PINATA_JWT` as a fallback |
 | `launch-not-found` / `launch-wrong-state` / `launch-expired` | The launch record isn't usable (already sent, or unsigned for 30 minutes) | Start the launch again |
 | `insufficient-sol` | The wallet can't cover rent + fees + dev buy | Top up the wallet; nothing was sent |
 | `simulation-failed` | The dry run failed | Expand "Program logs" in the error; usually a pump program change, so check for a newer `@pump-fun/pump-sdk` |
