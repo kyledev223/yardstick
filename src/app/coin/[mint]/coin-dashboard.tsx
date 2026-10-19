@@ -79,6 +79,7 @@ export function CoinDashboard({ mint, initial, launchedSig }: { mint: string; in
   const st = view.standing[group];
   const external = coin.source === "external";
   const curvePct = latest?.graduated ? 100 : (latest?.curveProgress ?? 0);
+  const reading = latest?.tradesState === "catching-up";
 
   return (
     <div data-field="quiet" className="mx-auto max-w-page px-gutter pt-4 md:pt-8">
@@ -221,27 +222,35 @@ export function CoinDashboard({ mint, initial, launchedSig }: { mint: string; in
         <p className="mt-2 max-w-measure text-sm text-muted">
           Each bar runs from weakest (left) to strongest (right) among {GROUP_LABEL[group]}. The notch is the median; the shaded part is the middle half; the dot is this coin.
         </p>
+        {latest?.tradesState === "catching-up" && (
+          <p role="status" className="mt-5 max-w-wide rounded-lg bg-soft p-4 text-sm ring-2 ring-yellow">
+            <strong className="font-semibold">Still reading this coin&apos;s trades.</strong> Buys and sells, unique buyers, sniper share, fresh wallets and creator sells cover the first{" "}
+            <span className="num">{fmtInt(latest.tradesCounted)}</span> trades read so far, so they can trail market cap, curve, net SOL in and holders, which are read live. They fill in over the
+            next readings.
+          </p>
+        )}
+        {latest?.tradesState === "capped" && (
+          <p className="mt-5 max-w-wide rounded-lg bg-soft p-4 text-sm">
+            Trade-based metrics are based on the first <span className="num">{fmtInt(latest.tradesCounted)}</span> trades: reading every trade of a busy coin would exceed the free data plan.
+          </p>
+        )}
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {(["holders", "uniqueBuyers", "netInflowSol"] as MetricKey[]).map((k) => (
-            <MetricCell key={k} card={view.metrics.find((m) => m.key === k)!} group={group} bucket={view.bucket} />
+            <MetricCell key={k} card={view.metrics.find((m) => m.key === k)!} group={group} bucket={view.bucket} partial={reading && TRADE_BASED.has(k)} />
           ))}
           <BuySellCell view={view} group={group} bucket={view.bucket} />
           <MetricCell card={view.metrics.find((m) => m.key === "curveProgress")!} group={group} bucket={view.bucket} />
           <MetricCell card={view.metrics.find((m) => m.key === "top10Pct")!} group={group} bucket={view.bucket} />
           <DevCell view={view} group={group} bucket={view.bucket} />
-          <MetricCell card={view.metrics.find((m) => m.key === "sniperPct")!} group={group} bucket={view.bucket} />
+          <MetricCell card={view.metrics.find((m) => m.key === "sniperPct")!} group={group} bucket={view.bucket} partial={reading} />
           <MetricCell
+            partial={reading}
             card={view.metrics.find((m) => m.key === "freshWalletPct")!}
             group={group}
             bucket={view.bucket}
             note={latest?.freshSampled ? `Sample of ${latest.freshSampled} buyers` : "Not sampled yet"}
           />
         </div>
-        {latest?.tradesCapped && (
-          <p className="mt-4 text-sm text-muted">
-            Trade-based metrics are based on the first <span className="num">{fmtInt(latest.tradesCounted)}</span> trades: reading every trade of a busy coin would exceed the free data plan.
-          </p>
-        )}
       </section>
 
       {/* Trajectory + notes */}
@@ -311,22 +320,28 @@ function percentileText(p: number | null, n: number, bucket: string) {
   return `${ordinal(p)} percentile at ${bucket}`;
 }
 
-function Cell({ title, children, help }: { title: string; children: React.ReactNode; help?: string }) {
+/** Metrics computed from decoded trades (they can trail while trades are still being read). */
+const TRADE_BASED = new Set<MetricKey>(["uniqueBuyers", "buySellCountRatio", "buySellSolRatio", "sniperPct", "freshWalletPct"]);
+
+function Cell({ title, children, help, partial }: { title: string; children: React.ReactNode; help?: string; partial?: boolean }) {
   return (
     <div className="flex flex-col rounded-lg bg-surface p-5 ring-1 ring-rule">
-      <h3 className="font-sans text-sm font-semibold tracking-normal text-muted" title={help}>
-        {title}
-      </h3>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-sans text-sm font-semibold tracking-normal text-muted" title={help}>
+          {title}
+        </h3>
+        {partial && <span className="inline-flex min-h-6 items-center rounded-pill bg-yellow px-2.5 text-micro font-bold text-on-pill">Still reading trades</span>}
+      </div>
       {children}
     </div>
   );
 }
 
-function MetricCell({ card, group, bucket, note }: { card: MetricCard; group: GroupKey; bucket: string; note?: string }) {
+function MetricCell({ card, group, bucket, note, partial }: { card: MetricCard; group: GroupKey; bucket: string; note?: string; partial?: boolean }) {
   const meta = METRIC_META[card.key];
   const g = card.groups[group];
   return (
-    <Cell title={meta.label} help={meta.short}>
+    <Cell title={meta.label} help={meta.short} partial={partial}>
       <div className="mt-1 flex items-end justify-between gap-3">
         <p className="num text-figure">{card.value === null ? "–" : meta.format(card.value)}</p>
         <Sparkline points={card.spark} label={meta.label} />
@@ -349,7 +364,7 @@ function BuySellCell({ view, group, bucket }: { view: CoinView; group: GroupKey;
   const bySol = view.metrics.find((m) => m.key === "buySellSolRatio")!;
   const l = view.latest;
   return (
-    <Cell title="Buys and sells">
+    <Cell title="Buys and sells" partial={l?.tradesState === "catching-up"}>
       <div className="mt-1 flex items-end justify-between gap-3">
         <p className="num text-figure">
           {l?.buys != null ? fmtInt(l.buys) : "–"}
@@ -370,6 +385,7 @@ function BuySellCell({ view, group, bucket }: { view: CoinView; group: GroupKey;
 function DevCell({ view, group, bucket }: { view: CoinView; group: GroupKey; bucket: string }) {
   const hold = view.metrics.find((m) => m.key === "devHoldPct")!;
   const d = view.latest?.dev;
+  const reading = view.latest?.tradesState === "catching-up";
   return (
     <Cell title="Creator wallet">
       <div className="mt-1 flex items-end justify-between gap-3">
@@ -378,7 +394,17 @@ function DevCell({ view, group, bucket }: { view: CoinView; group: GroupKey; buc
       </div>
       <p className="mt-1 text-micro text-muted">
         of supply held.{" "}
-        {d?.sold === null || d?.sold === undefined ? "Sells not known yet." : d.sold ? <span className="num">Has sold {fmtSol(d.soldSol ?? 0)} SOL worth ({fmtPct(d.soldPct ?? 0)} of supply).</span> : "No sells so far."}
+        {d?.sold === null || d?.sold === undefined ? (
+          "Sells not known yet."
+        ) : d.sold ? (
+          <span className="num">
+            Has sold {fmtSol(d.soldSol ?? 0)} SOL worth ({fmtPct(d.soldPct ?? 0)} of supply){reading ? " in the trades read so far" : ""}.
+          </span>
+        ) : reading ? (
+          "No sells in the trades read so far."
+        ) : (
+          "No sells so far."
+        )}
       </p>
       <div className="mt-4">
         <MetricBar percentile={hold.groups[group].percentile} inverted label="Creator holds" />

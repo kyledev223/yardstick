@@ -50,6 +50,11 @@ export type CoinView = {
     curveProgress: number | null;
     graduated: boolean;
     tradesCapped: boolean;
+    /**
+     * complete: every trade so far is counted. capped: stopped at the per-coin trade cap (free-plan limit).
+     * catching-up: trades are still being read, so trade-based figures can trail the live curve and holders.
+     */
+    tradesState: "complete" | "capped" | "catching-up";
     tradesCounted: number | null;
     freshSampled: number | null;
     dev: { holdPct: number | null; sold: boolean | null; soldSol: number | null; soldPct: number | null };
@@ -87,10 +92,11 @@ function bands(all: Map<AgeBucketKey, DistMap>, metric: MetricKey): BandPoint[] 
 
 export async function coinView(coin: Coin): Promise<CoinView> {
   const now = Date.now();
-  const [snaps, milestones, launch, price, ...dists] = await Promise.all([
+  const [snaps, milestones, launch, cursor, price, ...dists] = await Promise.all([
     db().snapshot.findMany({ where: { coinId: coin.id }, orderBy: { ageSeconds: "asc" } }),
     db().milestone.findMany({ where: { coinId: coin.id }, orderBy: { at: "asc" } }),
     db().launch.findFirst({ where: { coinId: coin.id }, select: { signature: true } }),
+    db().tradeCursor.findUnique({ where: { coinId: coin.id }, select: { capped: true } }),
     solUsd(),
     ...GROUPS.map((g) => loadAllDistributions(g)),
   ]);
@@ -170,6 +176,8 @@ export async function coinView(coin: Coin): Promise<CoinView> {
           curveProgress: latest.curveProgress,
           graduated: latest.graduated || Boolean(coin.graduatedAt),
           tradesCapped: latest.tradesCapped,
+          // The snapshot flag covers both cases; the cursor knows whether the cap was really reached.
+          tradesState: !latest.tradesCapped ? "complete" : cursor?.capped ? "capped" : "catching-up",
           tradesCounted: latest.tradesCounted,
           freshSampled: latest.freshSampled,
           dev: { holdPct: latest.devHoldPct, sold: latest.devSold, soldSol: latest.devSoldSol, soldPct: latest.devSoldPct },
