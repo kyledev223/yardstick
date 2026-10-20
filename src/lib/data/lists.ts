@@ -31,6 +31,7 @@ export type RankRow = {
   holders: number | null;
   netInflowSol: number | null;
   curveProgress: number | null;
+  mcapSol: number | null;
   /** Standing within the selected comparison group at `bucket`, or null without enough data. */
   percentile: number | null;
   group: GroupKey;
@@ -63,6 +64,7 @@ function rankOne(coin: Coin & { snapshots: Snapshot[] }, dists: Map<AgeBucketKey
     holders: s?.holders ?? null,
     netInflowSol: s?.netInflowSol ?? null,
     curveProgress: s?.curveProgress ?? null,
+    mcapSol: s?.mcapSol ?? null,
     percentile,
     group,
     bucket,
@@ -70,11 +72,14 @@ function rankOne(coin: Coin & { snapshots: Snapshot[] }, dists: Map<AgeBucketKey
   };
 }
 
-/** Yardstick launches ranked by standing in one group; coins without enough data go last. */
-export async function leaderboard(opts: { range: "today" | "7d"; graduatedOnly: boolean; group: GroupKey }): Promise<RankRow[]> {
+/**
+ * Yardstick launches ranked by standing in one group; coins without enough data go last.
+ * `source: "baseline"` ranks sampled pump.fun coins instead: used only by the dev-only landing preview.
+ */
+export async function leaderboard(opts: { range: "today" | "7d"; graduatedOnly: boolean; group: GroupKey; source?: "yardstick" | "baseline" }): Promise<RankRow[]> {
   const since = opts.range === "today" ? startOfUtcDay() : new Date(Date.now() - 7 * 86_400_000);
   const coins = await db().coin.findMany({
-    where: { source: "yardstick", createdAt: { gte: since }, ...(opts.graduatedOnly ? { graduatedAt: { not: null } } : {}) },
+    where: { source: opts.source ?? "yardstick", createdAt: { gte: since }, ...(opts.graduatedOnly ? { graduatedAt: { not: null } } : {}) },
     include: { snapshots: true },
     orderBy: { createdAt: "desc" },
     take: 500,
@@ -122,4 +127,37 @@ export async function creatorProfile(wallet: string): Promise<{ coins: CreatorCo
     launches: rows.length,
     graduationRate: rows.length ? (rows.filter((r) => r.outcome === "graduated").length / rows.length) * 100 : null,
   };
+}
+
+export type CoinChip = { mint: string; name: string; symbol: string; image: string | null };
+
+/** The most recent Yardstick launches that have an image (for the landing page's floating cards). `source` as in leaderboard(). */
+export async function recentLaunches(limit: number, source: "yardstick" | "baseline" = "yardstick"): Promise<CoinChip[]> {
+  const coins = await db().coin.findMany({
+    where: { source, imageUrl: { not: null } },
+    select: { mint: true, name: true, symbol: true, imageUrl: true },
+    orderBy: { createdAt: "desc" },
+    take: limit * 2,
+  });
+  return coins
+    .map((c) => ({ mint: c.mint, name: c.name, symbol: c.symbol, image: displayImage(c.imageUrl) }))
+    .filter((c) => c.image)
+    .slice(0, limit);
+}
+
+/** Coins Yardstick tracks whose symbol starts with, or name contains, the query. Yardstick launches first. */
+export async function searchCoins(q: string, limit = 8): Promise<(CoinChip & { source: string })[]> {
+  const term = q.trim().replace(/^\$/, "").slice(0, 32);
+  if (!term) return [];
+  const coins = await db().coin.findMany({
+    where: { OR: [{ symbol: { startsWith: term, mode: "insensitive" } }, { name: { contains: term, mode: "insensitive" } }] },
+    select: { mint: true, name: true, symbol: true, imageUrl: true, source: true, createdAt: true },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+  const rank = (c: (typeof coins)[number]) => (c.source === "yardstick" ? 0 : 2) + (c.symbol.toLowerCase() === term.toLowerCase() ? 0 : 1);
+  return coins
+    .sort((a, b) => rank(a) - rank(b))
+    .slice(0, limit)
+    .map((c) => ({ mint: c.mint, name: c.name, symbol: c.symbol, image: displayImage(c.imageUrl), source: c.source }));
 }

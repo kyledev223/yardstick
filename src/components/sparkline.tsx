@@ -14,7 +14,7 @@ export function Sparkline({ points, label }: { points: { age: number; value: num
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="h-6 w-24" role="img" aria-label={`${label} trend over ${points.length} readings`}>
       <path d={d} fill="none" stroke="var(--data-you)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={sx(xs[xs.length - 1])} cy={sy(last.value)} r="3" fill="var(--data-you)" stroke="var(--surface)" strokeWidth="1.5" />
+      <circle cx={sx(xs[xs.length - 1])} cy={sy(last.value)} r="3" fill="var(--data-you)" stroke="var(--card)" strokeWidth="1.5" />
     </svg>
   );
 }

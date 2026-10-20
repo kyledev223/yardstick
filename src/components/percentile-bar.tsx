@@ -18,16 +18,16 @@ export function PercentileBar({ percentile, label, size = "sm", showScale = fals
         <div className="absolute inset-y-0 w-[2px] -translate-x-1/2 rounded-pill bg-data-median" style={{ left: "50%" }} />
         {p !== null && (
           <>
-            <div className={`grow-in absolute left-0 top-1/2 -translate-y-1/2 rounded-pill bg-data-you ${lg ? "h-1.5" : "h-1"}`} style={{ width: `${p}%` }} />
+            <div className={`absolute left-0 top-1/2 -translate-y-1/2 rounded-pill bg-data-you ${lg ? "h-1.5" : "h-1"}`} style={{ width: `${p}%` }} />
             <div
-              className={`slide-in absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-pill bg-data-you ring-surface ${lg ? "h-6 w-6 ring-4" : "h-4 w-4 ring-[3px]"}`}
+              className={`absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-pill bg-data-you ring-card ${lg ? "h-6 w-6 ring-4" : "h-4 w-4 ring-[3px]"}`}
               style={{ left: `${p}%` }}
             />
           </>
         )}
       </div>
       {showScale && (
-        <div className="num mt-1.5 flex justify-between text-micro text-muted" aria-hidden>
+        <div className="num mt-1.5 flex justify-between font-mono text-mono text-muted" aria-hidden>
           <span>0</span>
           <span>median</span>
           <span>100</span>

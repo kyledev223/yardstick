@@ -63,8 +63,8 @@ export function LookupTableSetup() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-surface p-5 text-sm ring-1 ring-rule">
-        <p className="font-bold">Current status</p>
+      <div className="card-sm p-5 text-small">
+        <p className="font-medium">Current status</p>
         {!status ? (
           <div className="skeleton mt-2 h-4 w-64" />
         ) : !status.configured ? (
@@ -82,7 +82,7 @@ export function LookupTableSetup() {
       </div>
 
       <div>
-        <p className="text-sm text-muted">
+        <p className="text-small text-muted">
           This creates a lookup table from your wallet holding the {addresses?.length ?? "…"} pump.fun accounts every launch uses, then freezes it so it can never change or be closed. It costs about
           0.006 SOL of rent, which a frozen table can&apos;t give back. You approve three small transactions.
         </p>
@@ -92,7 +92,7 @@ export function LookupTableSetup() {
       </div>
 
       {log.length > 0 && (
-        <ol className="num space-y-1 text-sm" aria-live="polite">
+        <ol className="num space-y-1 text-small" aria-live="polite">
           {log.map((l, i) => (
             <li key={i}>{l}</li>
           ))}
@@ -100,8 +100,8 @@ export function LookupTableSetup() {
       )}
 
       {result && (
-        <div className="rounded-lg bg-surface p-5 text-sm ring-2 ring-up">
-          <p className="font-bold">Table created and frozen.</p>
+        <div className="rounded-2xl bg-card p-5 text-small shadow-[inset_0_0_0_1.5px_var(--up)]">
+          <p className="font-medium">Table created and frozen.</p>
           <p className="addr mt-2 break-all text-base">{result}</p>
           <ol className="mt-3 list-decimal space-y-1 pl-5 text-muted">
             <li>In Vercel, open Project → Settings → Environment Variables.</li>
@@ -110,15 +110,15 @@ export function LookupTableSetup() {
             </li>
             <li>Redeploy. This page will then show the table as in use.</li>
           </ol>
-          <a href={solscanAccount(result)} target="_blank" rel="noreferrer" className="mt-3 inline-block font-semibold text-teal-ink underline underline-offset-4">
+          <a href={solscanAccount(result)} target="_blank" rel="noreferrer" className="link mt-3 inline-block">
             View on Solscan
           </a>
         </div>
       )}
 
       {addresses && (
-        <details className="text-sm">
-          <summary className="inline-flex min-h-10 cursor-pointer items-center font-semibold text-teal-ink">Addresses that go in the table</summary>
+        <details className="text-small">
+          <summary className="link inline-flex min-h-10 cursor-pointer items-center">Addresses that go in the table</summary>
           <ul className="addr mt-2 space-y-0.5 text-xs text-muted">
             {addresses.map((a) => (
               <li key={a} className="break-all">

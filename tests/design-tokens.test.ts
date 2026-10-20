@@ -4,12 +4,16 @@ import { describe, expect, it } from "vitest";
 // Reads the colour tokens straight from globals.css so the CSS stays the single source of truth.
 const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
 
+function tokens(body: string): Record<string, string> {
+  return Object.fromEntries([...body.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6})\s*;/gi)].map(([, k, v]) => [k, v.toLowerCase()]));
+}
 function block(re: RegExp): Record<string, string> {
   const m = css.match(re);
   if (!m) throw new Error(`token block not found: ${re}`);
-  return Object.fromEntries([...m[1].matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6})\s*;/gi)].map(([, k, v]) => [k, v.toLowerCase()]));
+  return tokens(m[1]);
 }
 
+// First top-level :root block: light theme.
 const light = block(/^:root \{([^}]*)\}/m);
 const darkSystem = block(/@media \(prefers-color-scheme: dark\) \{\s*:root:not\(\[data-theme="light"\]\) \{([^}]*)\}/);
 const darkChosen = block(/^:root\[data-theme="dark"\] \{([^}]*)\}/m);
@@ -25,10 +29,14 @@ function contrast(a: string, b: string) {
   const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p);
   return (x + 0.05) / (y + 0.05);
 }
+/** Spread between the most and least saturated channel: 0 means a neutral grey. */
+function chroma(hex: string) {
+  const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  return Math.max(...c) - Math.min(...c);
+}
 
-const SURFACES = ["page", "surface", "soft", "sunk"];
+const SURFACES = ["paper", "card", "tint"];
 const TEXT = 4.5; // WCAG AA, normal text
-const LARGE = 3; // WCAG AA, large text (>= 24px, or >= 18.66px bold)
 const GRAPHIC = 3; // WCAG AA, non-text UI and chart marks
 
 // [foreground, background, minimum]
@@ -36,8 +44,7 @@ const PAIRS: [string, string, number][] = [
   ...SURFACES.flatMap((bg): [string, string, number][] => [
     ["ink", bg, TEXT],
     ["muted", bg, TEXT],
-    ["faint", bg, TEXT],
-    ["teal-ink", bg, TEXT],
+    ["primary-ink", bg, TEXT],
     ["up", bg, TEXT],
     ["down", bg, TEXT],
     ["rule-strong", bg, GRAPHIC],
@@ -45,25 +52,25 @@ const PAIRS: [string, string, number][] = [
     ["data-you", bg, GRAPHIC],
     ["data-median", bg, GRAPHIC],
   ]),
+  ["ink", "tint-strong", TEXT], // hovered pills and ghost buttons
+  ["muted", "tint-strong", TEXT],
+  ["on-primary", "primary", TEXT], // primary buttons
+  ["on-primary", "primary-hover", TEXT],
+  ["primary", "paper", GRAPHIC], // the button shape itself
+  ["on-accent", "accent", TEXT], // coral tags and chips
+  ["on-panel", "panel", TEXT], // ink panels
+  ["panel-muted", "panel", TEXT],
+  ["panel-accent", "panel", TEXT],
+  ["panel", "on-panel", TEXT], // paper button on ink panels
+  ["panel", "panel-accent", TEXT], // its hover
   ["data-you", "data-range", GRAPHIC],
   ["data-you", "data-range-strong", GRAPHIC],
+  ["data-median", "data-range", GRAPHIC],
   ["data-median", "data-range-strong", GRAPHIC],
-  ["on-btn", "btn", TEXT],
-  ["on-pill", "teal", TEXT],
-  ["on-pill", "yellow", TEXT],
-  ["on-pill", "coral", TEXT],
-  ["on-pill", "stone", TEXT],
-  ["on-teal", "teal", LARGE], // white on teal pills: display sizes only
-  ["page", "ink", TEXT], // ink pill
-  ["ink", "field-plus", LARGE], // + glyphs are kept out from under small text, so large text is the worst case
-  // Text drawn over the cursor-field glyphs must keep AA.
-  ...["field-dot", "field-square"].flatMap((g): [string, string, number][] => [
-    ["ink", g, TEXT],
-    ["muted", g, TEXT],
-    ["faint", g, TEXT],
-    ["teal-ink", g, TEXT],
-  ]),
 ];
+
+// Surfaces, lines and secondary text must carry colour: no neutral greys.
+const NO_GREY = ["paper", "tint", "tint-strong", "muted", "rule", "rule-strong", "panel", "panel-muted", "data-median", "data-range"];
 
 describe("design tokens", () => {
   it("dark theme blocks for system preference and explicit choice are identical", () => {
@@ -84,8 +91,13 @@ describe("design tokens", () => {
       expect(contrast(theme[fg], theme[bg])).toBeGreaterThanOrEqual(min);
     });
 
-    it(`${name}: field dots and squares stay close to the page colour`, () => {
-      for (const g of ["field-dot", "field-square"]) expect(contrast(theme[g], theme.page)).toBeLessThan(1.35);
+    it.each(NO_GREY)(`${name}: --%s is tinted, not a neutral grey`, (t) => {
+      expect(theme[t], `missing --${t}`).toBeDefined();
+      expect(chroma(theme[t])).toBeGreaterThanOrEqual(6);
     });
   }
+
+  it("body has an explicit background", () => {
+    expect(css).toMatch(/body \{[^}]*background: var\(--paper\)/);
+  });
 });

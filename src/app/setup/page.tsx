@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { PageHead } from "@/components/page-head";
 import { LookupTableSetup } from "./lookup-table-setup";
 
 export const metadata: Metadata = { title: "Site setup", robots: { index: false } };
@@ -11,15 +12,17 @@ export const metadata: Metadata = { title: "Site setup", robots: { index: false 
 export default function SetupPage() {
   if (process.env.NODE_ENV === "production") notFound();
   return (
-    <div className="mx-auto max-w-page px-gutter pt-6 md:pt-10">
-      <h1 className="text-display">Site setup: lookup table</h1>
-      <p className="mt-6 max-w-measure text-lead text-muted">
-        For the site owner, once. A launch with a dev buy needs more accounts than fit in a basic Solana transaction. A lookup table lets the transaction refer to pump.fun&apos;s fixed
-        accounts by a short index, so it fits. This page only runs on a local copy of the site; the deployed site returns &ldquo;not found&rdquo;.
-      </p>
-      <div className="mt-10 max-w-wide">
-        <LookupTableSetup />
+    <>
+      <PageHead
+        eyebrow="Site setup · local only"
+        title="Lookup table."
+        note="For the site owner, once. A launch with a dev buy needs more accounts than fit in a basic Solana transaction. A lookup table lets the transaction refer to pump.fun's fixed accounts by a short index, so it fits. This page only runs on a local copy of the site; the deployed site returns “not found”."
+      />
+      <div className="mx-auto mt-12 max-w-text px-gutter">
+        <div className="max-w-3xl">
+          <LookupTableSetup />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
