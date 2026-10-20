@@ -118,7 +118,8 @@ Never commit secrets. `.env*` (except `.env.example`) and keypair files are giti
 | Trade caps, fresh-wallet sample, sniper window, minimum sample sizes | `DATA` in `src/lib/config.ts` |
 | Dev-buy cap, priority fee, rate limits, banned words | `LAUNCH` in `src/lib/config.ts` |
 | Tick time/credit budget, refresh intervals | `TICK` in `src/lib/config.ts` |
-| Footer links / socials | `src/components/site-footer.tsx` |
+| Footer links | `src/components/site-footer.tsx` |
+| X account and project CA (header, menu and footer buttons) | `X_HANDLE`, `PROJECT_CA` in `src/lib/config.ts` |
 | Custom domain | Vercel → Project → Settings → Domains; then update `SITE_URL` and the cron-job.org URL, and redeploy |
 
 ## 9. Local development

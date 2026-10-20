@@ -2,6 +2,12 @@
 
 export const NETWORK_LABEL = "Solana mainnet";
 
+// ---- Socials (header, menu and footer buttons) ----
+/** The project's X handle, without the @. Empty: the X button opens x.com. */
+export const X_HANDLE = "yardstickappsol";
+/** The project's own coin mint (CA). Empty: the pump.fun button opens pump.fun. */
+export const PROJECT_CA = "6qzPz3hHaSFA5rQe6zj62bPuhWbhLdUGhhgfNgJopump";
+
 export const PUMP_PROGRAM_ID = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P";
 /** Pump's mint-authority PDA: only create transactions reference it. */
 export const PUMP_MINT_AUTHORITY = "TSLvdd1pWpHVjahSpsvCXUbgwsL3JAcvokwaKt1eokM";

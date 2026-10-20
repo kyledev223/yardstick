@@ -2,6 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { NETWORK_LABEL } from "@/lib/config";
 import { CheckCoinButton } from "./command-search";
+import { SocialLinks } from "./social-links";
 
 const LINKS = [
   ["/launch", "Launch"],
@@ -39,7 +40,8 @@ export function SiteFooter() {
             <span>Data, not advice</span>
             <span>Free. No fees.</span>
           </p>
-          <nav aria-label="Footer">
+          <nav aria-label="Footer" className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <SocialLinks className="-mx-2 order-last sm:order-first" />
             <ul className="flex flex-wrap gap-x-4 gap-y-1">
               {LINKS.map(([href, label]) => (
                 <li key={href}>

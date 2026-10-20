@@ -4,6 +4,7 @@ import { Logo } from "./logo";
 import { MainNav } from "./main-nav";
 import { MobileMenu } from "./mobile-menu";
 import { NetworkBadge } from "./network-badge";
+import { SocialLinks } from "./social-links";
 import { ThemeToggle } from "./theme-toggle";
 import { WalletButton } from "./wallet-button";
 
@@ -26,6 +27,7 @@ export function SiteHeader() {
           <SearchPill className="hidden w-64 xl:flex" />
           <div className="flex shrink-0 items-center gap-2">
             <SearchIconButton className="hidden sm:grid xl:hidden" />
+            <SocialLinks className="hidden lg:flex" />
             <ThemeToggle className="hidden lg:grid" />
             <span className="hidden lg:block">
               <WalletButton small />

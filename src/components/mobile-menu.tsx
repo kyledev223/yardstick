@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Logo } from "./logo";
 import { MainNav } from "./main-nav";
 import { NetworkBadge } from "./network-badge";
+import { SocialLinks } from "./social-links";
 import { ThemeToggle } from "./theme-toggle";
 import { WalletButton } from "./wallet-button";
 
@@ -46,6 +47,7 @@ export function MobileMenu({ className = "" }: { className?: string }) {
         <div className="flex flex-wrap items-center gap-2 border-t border-rule px-4 py-4">
           <WalletButton />
           <ThemeToggle />
+          <SocialLinks />
           <NetworkBadge className="ml-auto" />
         </div>
       </dialog>
