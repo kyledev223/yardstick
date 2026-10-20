@@ -55,10 +55,10 @@ export function WalletDialog({ open, onClose }: { open: boolean; onClose: () => 
   const shown = wallets.filter((w) => ["Phantom", "Solflare", "OKX Wallet"].includes(w.adapter.name));
 
   return (
-    <dialog ref={ref} onClose={onClose} className="m-auto w-[min(26rem,calc(100vw-2rem))] rounded-xl bg-surface p-0 text-ink shadow-2xl ring-1 ring-rule backdrop:bg-black/50">
+    <dialog ref={ref} onClose={onClose} className="m-auto w-[min(26rem,calc(100vw-2rem))] rounded-card bg-card p-0 text-ink shadow-[0_24px_80px_var(--shadow),inset_0_0_0_1px_var(--rule)] backdrop:bg-[rgb(7_10_36/0.45)] backdrop:backdrop-blur-sm">
       <div className="flex items-center justify-between px-6 pt-5 pb-2">
         <h2 className="text-title">{help ? `Install ${help}` : "Connect a wallet"}</h2>
-        <button type="button" onClick={onClose} className="grid h-11 w-11 place-items-center rounded-pill text-muted hover:bg-sunk hover:text-ink" aria-label="Close">
+        <button type="button" onClick={onClose} className="grid h-9 w-9 place-items-center rounded-pill text-muted hover:bg-tint hover:text-ink" aria-label="Close">
           <X size={18} />
         </button>
       </div>
@@ -77,7 +77,7 @@ export function WalletDialog({ open, onClose }: { open: boolean; onClose: () => 
             <li>Create a wallet or import one inside the extension. Yardstick never asks for your recovery phrase.</li>
             <li>Pin the extension, then reload this page and connect again.</li>
           </ol>
-          <button type="button" onClick={() => setHelp(null)} className="btn btn-secondary mt-2">
+          <button type="button" onClick={() => setHelp(null)} className="btn btn-outline mt-2">
             Back to wallets
           </button>
         </div>
@@ -85,11 +85,11 @@ export function WalletDialog({ open, onClose }: { open: boolean; onClose: () => 
         <ul className="px-3 pt-1 pb-4">
           {shown.map((w) => (
             <li key={w.adapter.name}>
-              <button type="button" onClick={() => choose(w.adapter.name, w.readyState)} className="flex min-h-14 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-sunk">
+              <button type="button" onClick={() => choose(w.adapter.name, w.readyState)} className="flex min-h-14 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-tint">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={w.adapter.icon} alt="" width={28} height={28} className="rounded-sm" />
-                <span className="flex-1 font-semibold">{w.adapter.name}</span>
-                <span className="text-micro text-muted">{w.readyState === WalletReadyState.Installed ? "Detected" : "Not installed"}</span>
+                <span className="flex-1 font-medium">{w.adapter.name}</span>
+                <span className="text-label text-muted">{w.readyState === WalletReadyState.Installed ? "Detected" : "Not installed"}</span>
               </button>
             </li>
           ))}
@@ -100,7 +100,8 @@ export function WalletDialog({ open, onClose }: { open: boolean; onClose: () => 
   );
 }
 
-export function WalletButton() {
+export function WalletButton({ small = false }: { small?: boolean }) {
+  const size = small ? "btn-sm" : "";
   const { publicKey, disconnect, connecting } = useWallet();
   const { sessionWallet, signIn, signOut } = useAuth();
   const [open, setOpen] = useState(false);
@@ -113,8 +114,8 @@ export function WalletButton() {
   if (!wallet) {
     return (
       <>
-        <button type="button" onClick={() => setOpen(true)} className="btn btn-secondary">
-          <Wallet size={16} strokeWidth={1.75} /> {connecting ? "Connecting…" : "Connect"}
+        <button type="button" onClick={() => setOpen(true)} className={`btn btn-ghost ${size}`}>
+          <Wallet size={15} strokeWidth={1.75} aria-hidden /> {connecting ? "Connecting…" : "Connect wallet"}
         </button>
         <WalletDialog open={open} onClose={() => setOpen(false)} />
       </>
@@ -134,12 +135,12 @@ export function WalletButton() {
             if (e) setErr(e.message);
             setBusy(false);
           }}
-          className="btn btn-primary"
+          className={`btn btn-outline ${size}`}
           title={err ?? "Sign a message to prove you own this wallet. Free; no transaction."}
         >
           {busy ? "Check your wallet…" : `Sign in ${shortAddr(wallet)}`}
         </button>
-        <button type="button" onClick={() => disconnect()} className="grid h-11 w-11 place-items-center rounded-pill text-muted hover:bg-sunk hover:text-ink" aria-label="Disconnect wallet">
+        <button type="button" onClick={() => disconnect()} className="grid h-9 w-9 place-items-center rounded-pill text-muted hover:bg-tint hover:text-ink" aria-label="Disconnect wallet">
           <LogOut size={16} />
         </button>
       </div>
@@ -148,14 +149,14 @@ export function WalletButton() {
 
   return (
     <div className="relative">
-      <button type="button" onClick={() => setMenu((m) => !m)} aria-expanded={menu} className="btn btn-secondary addr gap-2 text-sm">
-        <span className="h-2.5 w-2.5 rounded-pill bg-teal" aria-hidden />
+      <button type="button" onClick={() => setMenu((m) => !m)} aria-expanded={menu} className={`btn btn-ghost addr gap-2 ${size}`}>
+        <span className="h-2 w-2 rounded-pill bg-primary" aria-hidden />
         {shortAddr(wallet)}
-        <ChevronDown size={14} />
+        <ChevronDown size={14} aria-hidden />
       </button>
       {menu && (
-        <div className="absolute right-0 z-20 mt-2 w-48 rounded-lg bg-surface p-1.5 shadow-xl ring-1 ring-rule" onMouseLeave={() => setMenu(false)}>
-          <Link href={`/creator/${wallet}`} onClick={() => setMenu(false)} className="flex min-h-11 items-center rounded-md px-3 font-semibold hover:bg-sunk">
+        <div className="absolute right-0 z-20 mt-2 w-48 rounded-2xl bg-card p-1.5 shadow-[0_16px_45px_var(--shadow),inset_0_0_0_1px_var(--rule)]" onMouseLeave={() => setMenu(false)}>
+          <Link href={`/creator/${wallet}`} onClick={() => setMenu(false)} className="flex min-h-10 items-center rounded-xl px-3 text-small font-medium hover:bg-tint">
             My coins
           </Link>
           <button
@@ -165,7 +166,7 @@ export function WalletButton() {
               await signOut();
               await disconnect();
             }}
-            className="flex min-h-11 w-full items-center rounded-md px-3 text-left font-semibold hover:bg-sunk"
+            className="flex min-h-10 w-full items-center rounded-xl px-3 text-left text-small font-medium hover:bg-tint"
           >
             Sign out
           </button>

@@ -1,164 +1,160 @@
 @import "tailwindcss";
 
 /*
- * Yardstick design tokens. One place for colour, type, space, shape and motion.
- * Light (default): warm grey page, deep teal-black ink, teal accent.
- * Dark: deep teal-black page, warm light text, same accents.
+ * Yardstick design tokens (v3). One place for colour, type, space, shape and motion.
+ * Layout and type follow a calm paper-and-ink style: rounded cards, mono uppercase labels,
+ * medium-weight headlines with tight tracking, very little motion.
+ * Colour rule: no neutral greys. Quiet surfaces, borders and secondary text are tinted ink-blue;
+ * one strong primary (electric ultramarine) and one fill-only second accent (coral).
  * Contrast of every text/data pair is checked in tests/design-tokens.test.ts.
  */
 
 /* ---- Colour: light (default) ---- */
 :root {
   /* surfaces */
-  --page: #e8e5df; /* page background */
-  --surface: #ffffff; /* cards, panels, inputs */
-  --soft: #f5f3ef; /* footer bar, quiet panels */
-  --sunk: #dcd8cc; /* chips, tracks, alternate sections */
+  --paper: #f8f9ff; /* page (cool near-white) */
+  --card: #ffffff; /* cards, form, floating coin cards, popovers */
+  --tint: #eceffe; /* quiet panels: pills, preview panel, footer band, skeletons */
+  --tint-strong: #e0e5ff; /* hover fill of pills and ghost buttons */
   /* text */
-  --ink: #071b1f; /* body text, headings */
-  --muted: #3d4c4f; /* secondary text */
-  --faint: #4b595c; /* tertiary text, still AA on every surface */
+  --ink: #070a24; /* text, headlines */
+  --muted: #464d7a; /* secondary text (ink-blue) */
   /* lines */
-  --rule: #cfcabd; /* decorative dividers */
-  --rule-strong: #76736a; /* input borders and other boundaries that must read (3:1) */
-  /* brand */
-  --teal: #299093; /* large elements, fills, accents; white text on it only at large sizes */
-  --teal-ink: #17676a; /* links and small teal text */
-  --yellow: #ffbd00; /* highlight only */
-  --coral: #ef6156; /* highlight only */
-  --stone: #8f8c83; /* neutral highlight pill */
-  --on-pill: #071b1f; /* text on yellow, coral, stone pills (both themes) */
-  --on-teal: #ffffff; /* text on teal pills: display sizes only */
-  --btn: #17676a; /* primary button fill */
-  --on-btn: #ffffff;
-  --focus: #17676a;
+  --rule: #d5daf3; /* card borders and section rules (decorative) */
+  --rule-strong: #7880b0; /* input borders and boundaries that must read (3:1) */
+  /* primary: buttons, the standing number, your coin, focus */
+  --primary: #2442ff; /* fill */
+  --primary-hover: #1a33d6;
+  --on-primary: #ffffff;
+  --primary-ink: #2442ff; /* primary as text and thin marks */
+  /* second accent: tags, badges, chips. Fill only, ink text on it. */
+  --accent: #ff6a3d;
+  --on-accent: #070a24;
+  /* ink panels and full-bleed ink sections */
+  --panel: #070a24;
+  --panel-edge: #070a24; /* border of ink panels (shows in dark only) */
+  --on-panel: #f3f4ff;
+  --panel-muted: #a6aedc;
+  --panel-accent: #8c9bff; /* primary on ink panels */
+  --focus: #2442ff;
   /* data */
-  --data-you: #1c7a7d; /* "your coin" lines, bars, markers */
-  --data-median: #3d4c4f; /* median marker */
-  --data-range: #e3dfd4; /* comparison range band on white surfaces */
-  --data-range-strong: #cfc9b9; /* middle half of the range */
-  --up: #16683b;
-  --down: #b3263a;
-  /* cursor field glyphs: barely off the page colour so they blend in */
-  --field-dot: #f5f3ef;
-  --field-square: #dcd8cc;
-  --field-plus: #299093;
+  --data-you: #2442ff; /* "your coin" lines, bars, markers */
+  --data-median: #4a5285; /* median notch and line */
+  --data-range: #dde2fd; /* comparison track */
+  --data-range-strong: #b4c0ff; /* middle half of the group */
+  --up: #00754a; /* always with ▲ and + */
+  --down: #d6143f; /* always with ▼ and −, and errors */
+  --shadow: rgb(7 10 36 / 0.14);
   color-scheme: light;
 }
 
 /* ---- Colour: dark. Two identical blocks (system preference and explicit choice); the test keeps them in sync. ---- */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --page: #071a1d;
-    --surface: #0e2427;
-    --soft: #0b1f22;
-    --sunk: #142c30;
-    --ink: #ece8e0;
-    --muted: #bcc0b9;
-    --faint: #9aa19c;
-    --rule: #20383c;
-    --rule-strong: #6c8286;
-    --teal: #299093;
-    --teal-ink: #5ec4c6;
-    --yellow: #ffbd00;
-    --coral: #ef6156;
-    --stone: #8f8c83;
-    --on-pill: #071b1f;
-    --on-teal: #ffffff;
-    --btn: #5ec4c6;
-    --on-btn: #071b1f;
-    --focus: #5ec4c6;
-    --data-you: #4fbdc0;
-    --data-median: #c9cbc4;
-    --data-range: #173135;
-    --data-range-strong: #22423f;
-    --up: #5fd08f;
-    --down: #ff8591;
-    --field-dot: #102629;
-    --field-square: #132a2e;
-    --field-plus: #1f7376;
+    --paper: #080b26;
+    --card: #0f1438;
+    --tint: #141a45;
+    --tint-strong: #1c2357;
+    --ink: #f3f4ff;
+    --muted: #a9b0dd;
+    --rule: #252c64;
+    --rule-strong: #6e78bd;
+    --primary: #3a55ff;
+    --primary-hover: #2a43e8;
+    --on-primary: #ffffff;
+    --primary-ink: #8c9bff;
+    --accent: #ff7a4f;
+    --on-accent: #070a24;
+    --panel: #03051a;
+    --panel-edge: #252c64;
+    --on-panel: #f3f4ff;
+    --panel-muted: #a6aedc;
+    --panel-accent: #8c9bff;
+    --focus: #8c9bff;
+    --data-you: #8c9bff;
+    --data-median: #b6bdea;
+    --data-range: #1b2258;
+    --data-range-strong: #303c94;
+    --up: #3ee49a;
+    --down: #ff6f8e;
+    --shadow: rgb(0 0 0 / 0.45);
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --page: #071a1d;
-  --surface: #0e2427;
-  --soft: #0b1f22;
-  --sunk: #142c30;
-  --ink: #ece8e0;
-  --muted: #bcc0b9;
-  --faint: #9aa19c;
-  --rule: #20383c;
-  --rule-strong: #6c8286;
-  --teal: #299093;
-  --teal-ink: #5ec4c6;
-  --yellow: #ffbd00;
-  --coral: #ef6156;
-  --stone: #8f8c83;
-  --on-pill: #071b1f;
-  --on-teal: #ffffff;
-  --btn: #5ec4c6;
-  --on-btn: #071b1f;
-  --focus: #5ec4c6;
-  --data-you: #4fbdc0;
-  --data-median: #c9cbc4;
-  --data-range: #173135;
-  --data-range-strong: #22423f;
-  --up: #5fd08f;
-  --down: #ff8591;
-  --field-dot: #102629;
-  --field-square: #132a2e;
-  --field-plus: #1f7376;
+  --paper: #080b26;
+  --card: #0f1438;
+  --tint: #141a45;
+  --tint-strong: #1c2357;
+  --ink: #f3f4ff;
+  --muted: #a9b0dd;
+  --rule: #252c64;
+  --rule-strong: #6e78bd;
+  --primary: #3a55ff;
+  --primary-hover: #2a43e8;
+  --on-primary: #ffffff;
+  --primary-ink: #8c9bff;
+  --accent: #ff7a4f;
+  --on-accent: #070a24;
+  --panel: #03051a;
+  --panel-edge: #252c64;
+  --on-panel: #f3f4ff;
+  --panel-muted: #a6aedc;
+  --panel-accent: #8c9bff;
+  --focus: #8c9bff;
+  --data-you: #8c9bff;
+  --data-median: #b6bdea;
+  --data-range: #1b2258;
+  --data-range-strong: #303c94;
+  --up: #3ee49a;
+  --down: #ff6f8e;
+  --shadow: rgb(0 0 0 / 0.45);
   color-scheme: dark;
 }
 
-/* ---- Space, shape, motion, cursor field (theme-independent) ---- */
+/* ---- Space and motion (theme-independent) ---- */
 :root {
-  --gutter: 1rem; /* outer page gutter: 16px on phones */
-  --gutter-inner: 1rem; /* gap between grid columns */
-  --section-sm: clamp(3rem, 2rem + 4vw, 6rem);
-  --section-md: clamp(4.5rem, 2.5rem + 8vw, 10rem);
-  --section-lg: clamp(6rem, 3rem + 12vw, 15rem);
+  --gutter: 1rem; /* outer page gutter: 16px on phones, 20px from sm */
+  --header-h: 7.5rem; /* space the fixed header takes on phones (two rows) */
+  --section: 6rem; /* vertical section padding: 96px on phones, 144px from sm */
 
-  --dur-fast: 150ms; /* hovers, colour changes */
-  --dur-base: 300ms; /* small state changes */
-  --dur-slow: 600ms; /* pill wipes, bars growing */
-  --dur-reveal: 800ms; /* headline and wordmark reveals */
-  --stagger: 60ms; /* delay between items in a reveal */
-
-  --field-cell: 32px; /* glyph grid pitch */
-  --field-glyph: 14px; /* glyph size inside a cell */
-  --field-strength: 1; /* 1 = landing hero; data pages set a lower value */
-  --field-strength-data: 0.35;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1); /* every transition */
+  --dur-fast: 150ms; /* hovers, colour and opacity changes */
+  --dur-zoom: 500ms; /* coin-card image zoom */
+  --dur-float: 7s; /* one bob of a floating hero card */
+  --float-distance: -14px;
+  --float-stagger: -1.3s; /* phase offset between floating cards */
 }
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   :root {
-    --gutter: 2rem;
-    --gutter-inner: 1.5rem;
+    --gutter: 1.25rem;
+    --section: 9rem;
+    --header-h: 6rem; /* one header row from sm */
   }
 }
 
-/* ---- Tailwind theme: exposes the tokens as utilities (bg-page, text-muted, text-display, rounded-card…) ---- */
+/* ---- Tailwind theme: exposes the tokens as utilities (bg-paper, text-muted, text-display…) ---- */
 @theme inline {
-  --color-page: var(--page);
-  --color-surface: var(--surface);
-  --color-soft: var(--soft);
-  --color-sunk: var(--sunk);
+  --color-paper: var(--paper);
+  --color-card: var(--card);
+  --color-tint: var(--tint);
+  --color-tint-strong: var(--tint-strong);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
-  --color-faint: var(--faint);
   --color-rule: var(--rule);
   --color-rule-strong: var(--rule-strong);
-  --color-teal: var(--teal);
-  --color-teal-ink: var(--teal-ink);
-  --color-yellow: var(--yellow);
-  --color-coral: var(--coral);
-  --color-stone: var(--stone);
-  --color-on-pill: var(--on-pill);
-  --color-on-teal: var(--on-teal);
-  --color-btn: var(--btn);
-  --color-on-btn: var(--on-btn);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-primary-ink: var(--primary-ink);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-panel: var(--panel);
+  --color-panel-edge: var(--panel-edge);
+  --color-on-panel: var(--on-panel);
+  --color-panel-muted: var(--panel-muted);
+  --color-panel-accent: var(--panel-accent);
   --color-focus: var(--focus);
   --color-data-you: var(--data-you);
   --color-data-median: var(--data-median);
@@ -167,86 +163,79 @@
   --color-up: var(--up);
   --color-down: var(--down);
 
-  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, monospace; /* wallet addresses and signatures only */
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  /* type scale: size / line-height / tracking / weight */
-  --text-giant: clamp(4.5rem, 1rem + 15vw, 16rem);
-  --text-giant--line-height: 0.85;
-  --text-giant--letter-spacing: -0.045em;
-  --text-giant--font-weight: 800;
-  --text-display: clamp(2.25rem, 1.1rem + 4.6vw, 5rem);
-  --text-display--line-height: 1.12;
-  --text-display--letter-spacing: -0.04em;
-  --text-display--font-weight: 800;
-  --text-headline: clamp(1.75rem, 1.2rem + 2.2vw, 2.75rem);
-  --text-headline--line-height: 1.15;
-  --text-headline--letter-spacing: -0.03em;
-  --text-headline--font-weight: 700;
-  --text-title: clamp(1.25rem, 1.05rem + 0.8vw, 1.75rem);
-  --text-title--line-height: 1.25;
-  --text-title--letter-spacing: -0.02em;
-  --text-title--font-weight: 600;
-  --text-lead: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
-  --text-lead--line-height: 1.5;
-  --text-micro: 0.8125rem;
-  --text-micro--line-height: 1.4;
-  --text-figure-hero: clamp(5rem, 2.5rem + 11vw, 11rem);
-  --text-figure-hero--line-height: 0.85;
-  --text-figure-hero--letter-spacing: -0.05em;
-  --text-figure-hero--font-weight: 800;
-  --text-figure: clamp(1.75rem, 1.45rem + 1.1vw, 2.5rem);
-  --text-figure--line-height: 1.05;
-  --text-figure--letter-spacing: -0.03em;
-  --text-figure--font-weight: 700;
+  /* type scale: size / line-height / tracking / weight. Fluid sizes run from a 390px to a 1440px viewport. */
+  --text-hero: clamp(3rem, 1.886rem + 4.571vw, 6rem); /* 48 → 96px: hero and manifesto statements */
+  --text-hero--line-height: 0.96;
+  --text-hero--letter-spacing: -0.06em;
+  --text-hero--font-weight: 500;
+  --text-cta: clamp(3rem, 2.443rem + 2.286vw, 4.5rem); /* 48 → 72px: closing call to action, 404 */
+  --text-cta--line-height: 1;
+  --text-cta--letter-spacing: -0.06em;
+  --text-cta--font-weight: 500;
+  --text-display: clamp(2.25rem, 1.693rem + 2.286vw, 3.75rem); /* 36 → 60px: section and page titles */
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.05em;
+  --text-display--font-weight: 500;
+  --text-title: 1.5rem; /* 24px: card titles */
+  --text-title--line-height: 2rem;
+  --text-title--letter-spacing: -0.025em;
+  --text-title--font-weight: 500;
+  --text-stat: 1.875rem; /* 30px: figures in stat rows and metric cards */
+  --text-stat--line-height: 2.25rem;
+  --text-stat--letter-spacing: -0.025em;
+  --text-stat--font-weight: 500;
+  --text-lead: clamp(0.875rem, 0.801rem + 0.305vw, 1rem); /* 14 → 16px muted intro lines */
+  --text-lead--line-height: 1.5rem;
+  --text-small: 0.875rem; /* 14px running text in cards */
+  --text-small--line-height: 1.5rem;
+  --text-label: 0.75rem; /* 12px: nav, captions */
+  --text-label--line-height: 1rem;
+  --text-mono: 0.625rem; /* 10px mono labels, tickers, pills */
+  --text-mono--line-height: 0.9375rem;
 
   --spacing-gutter: var(--gutter);
-  --spacing-gutter-inner: var(--gutter-inner);
-  --spacing-section-sm: var(--section-sm);
-  --spacing-section-md: var(--section-md);
-  --spacing-section-lg: var(--section-lg);
+  --spacing-header: var(--header-h);
+  --spacing-section: var(--section);
 
-  --container-page: 90rem; /* widest content row (1440px) */
-  --container-wide: 72rem;
-  --container-narrow: 48rem; /* forms */
+  --container-page: 80rem; /* 1280px: grids, footer, header content */
+  --container-text: 72rem; /* 1152px: statement sections, inner pages */
   --container-measure: 36rem; /* running text */
 
-  --radius-xs: 0.5rem; /* small chips inside tables */
-  --radius-sm: 0.75rem;
-  --radius-md: 1rem; /* inputs */
-  --radius-lg: 1.5rem; /* cards */
-  --radius-xl: 2.5rem; /* large panels */
-  --radius-2xl: 4.5rem; /* hero shapes */
-  --radius-card: 1.5rem;
+  --radius-field: 0.8rem; /* inputs and buttons */
+  --radius-card: 1.5rem; /* the big cards and panels */
   --radius-pill: 9999px;
 
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* fast start, long soft landing */
-  --ease-in-out: cubic-bezier(0.65, 0.05, 0.35, 1);
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ---- Base ---- */
 html {
   -webkit-text-size-adjust: 100%;
-  background: var(--page);
+  background: var(--paper);
+  /* The fixed header covers the top of the page: anchor targets land below it. */
+  scroll-padding-top: calc(var(--header-h) + 1rem);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 body {
-  background: var(--page);
+  background: var(--paper);
   color: var(--ink);
   font-family: var(--font-sans);
   font-size: 1rem;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 h1,
 h2,
 h3 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
+  font-weight: 500;
   text-wrap: balance;
 }
 
@@ -254,11 +243,7 @@ p {
   text-wrap: pretty;
 }
 
-a {
-  text-underline-offset: 0.18em;
-}
-
-/* Figures: Figtree's tabular digits so columns line up. */
+/* Figures: tabular digits so columns and stats line up. */
 .num {
   font-variant-numeric: tabular-nums;
 }
@@ -270,109 +255,166 @@ a {
   letter-spacing: 0;
 }
 
-:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+/* In the base layer so components (fields) and utilities can restyle focus. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
 }
 
 ::selection {
-  background: var(--yellow);
-  color: var(--on-pill);
+  background: var(--primary);
+  color: var(--on-primary);
 }
 
 /* ---- Components ---- */
 @layer components {
-  /* Highlight pill around words in a headline. Bold on the landing page, sparing on data pages. */
-  .pill {
-    display: inline-block;
-    padding-inline: 0.22em;
-    padding-block: 0 0.08em; /* room for descenders (g, p, y) */
-    margin-block: 0.04em;
-    border-radius: var(--radius-pill);
-    line-height: 1.18;
-    box-decoration-break: clone;
-    -webkit-box-decoration-break: clone;
-  }
-  .pill-teal {
-    background: var(--teal);
-    color: var(--on-teal); /* 3.8:1, so display sizes only */
-  }
-  .pill-ink {
-    background: var(--ink);
-    color: var(--page);
-  }
-  .pill-plain {
-    background: var(--surface);
-    color: var(--ink);
-    box-shadow: inset 0 0 0 1px var(--rule);
-  }
-  .pill-yellow {
-    background: var(--yellow);
-    color: var(--on-pill);
-  }
-  .pill-coral {
-    background: var(--coral);
-    color: var(--on-pill);
-  }
-  .pill-stone {
-    background: var(--stone);
-    color: var(--on-pill);
+  /* Mono uppercase label above headings and figures. */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    line-height: var(--text-mono--line-height);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
   }
 
-  /* Small rounded tag. */
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35em;
-    min-height: 1.75rem;
-    padding-inline: 0.75rem;
-    border-radius: var(--radius-pill);
-    background: var(--sunk);
-    color: var(--ink);
-    font-size: var(--text-micro);
-    line-height: 1.2;
-  }
-
-  /* Buttons: pill-shaped, at least 44px tall. */
+  /* Buttons: 36px, 12.8px corners. Primary is the accent; ghost fills with tint on hover. */
   .btn {
     display: inline-flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    gap: 0.5em;
-    min-height: 2.75rem;
-    padding-inline: 1.25rem;
-    border-radius: var(--radius-pill);
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    gap: 0.375rem;
+    height: 2.25rem;
+    padding-inline: 0.75rem;
+    border-radius: var(--radius-field);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    white-space: nowrap;
     transition:
       background-color var(--dur-fast) var(--ease-standard),
       color var(--dur-fast) var(--ease-standard),
-      box-shadow var(--dur-fast) var(--ease-standard);
+      opacity var(--dur-fast) var(--ease-standard);
   }
   .btn:disabled,
   .btn[aria-disabled="true"] {
-    opacity: 0.55;
+    opacity: 0.5;
     cursor: not-allowed;
   }
-  .btn-primary {
-    background: var(--btn);
-    color: var(--on-btn);
-  }
-  .btn-primary:hover:not(:disabled) {
-    background: color-mix(in oklab, var(--btn) 85%, var(--ink));
-  }
-  .btn-secondary {
-    background: transparent;
-    color: var(--ink);
-    box-shadow: inset 0 0 0 1.5px var(--ink);
-  }
-  .btn-secondary:hover:not(:disabled) {
-    background: var(--surface);
+  .btn-sm {
+    height: 2rem;
+    padding-inline: 0.625rem;
+    font-size: 0.8125rem;
   }
   .btn-lg {
-    min-height: 3.5rem;
-    padding-inline: 1.75rem;
-    font-size: 1.125rem;
+    height: 2.5rem;
+    padding-inline: 1rem;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: var(--on-primary);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--primary-hover);
+  }
+  .btn-ghost {
+    color: var(--ink);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--tint);
+  }
+  .btn-outline {
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--rule-strong);
+  }
+  .btn-outline:hover:not(:disabled) {
+    background: var(--tint);
+  }
+  /* Round paper button on ink panels. */
+  .btn-on-panel {
+    height: 2.5rem;
+    padding-inline: 1.25rem;
+    border-radius: var(--radius-pill);
+    background: var(--on-panel);
+    color: var(--panel);
+  }
+  .btn-on-panel:hover {
+    background: var(--panel-accent);
+  }
+  /* Ghost button on ink panels. */
+  .btn-panel-ghost {
+    height: 2.5rem;
+    padding-inline: 1.25rem;
+    border-radius: var(--radius-pill);
+    color: var(--on-panel);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--panel-muted) 45%, transparent);
+  }
+  .btn-panel-ghost:hover {
+    background: color-mix(in oklab, var(--on-panel) 10%, transparent);
+  }
+
+  /* Small round mono pill: badges, tags, the search trigger. */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 1.5rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: var(--text-mono);
+    line-height: var(--text-mono--line-height);
+    white-space: nowrap;
+  }
+  .tag-outline {
+    box-shadow: inset 0 0 0 1px var(--rule);
+  }
+  .tag-tint {
+    background: var(--tint);
+    color: var(--ink);
+  }
+  .tag-accent {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .tag-primary {
+    background: var(--primary);
+    color: var(--on-primary);
+  }
+
+  /* Cards: white, 1px tinted border, 24px corners (16px for small ones). */
+  .card {
+    border-radius: var(--radius-card);
+    background: var(--card);
+    box-shadow: inset 0 0 0 1px var(--rule);
+  }
+  .card-sm {
+    border-radius: 1rem;
+    background: var(--card);
+    box-shadow: inset 0 0 0 1px var(--rule);
+  }
+  /* Ink panel: the strong inverted block. */
+  .panel {
+    border-radius: var(--radius-card);
+    background: var(--panel);
+    color: var(--on-panel);
+    box-shadow: inset 0 0 0 1px var(--panel-edge);
+  }
+
+  /* Text link with an underline that appears on hover. */
+  .link {
+    color: var(--primary-ink);
+    font-weight: 500;
+    text-decoration-line: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color var(--dur-fast) var(--ease-standard);
+  }
+  .link:hover {
+    text-decoration-color: currentColor;
   }
 }
 
@@ -380,53 +422,64 @@ a {
 @layer components {
   .label {
     display: block;
-    margin-bottom: 0.375rem;
-    font-size: 0.9375rem;
-    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
   }
-  /* Text inputs, selects and textareas: 48px tall, clear border, obvious focus (global ring). */
+  .help {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.3125rem;
+    color: var(--muted);
+  }
+  /* Text inputs, selects and textareas: 36px, 12.8px corners, primary ring on focus. */
   .field {
     display: block;
     width: 100%;
-    min-height: 3rem;
-    padding: 0.625rem 1rem;
-    border: 1.5px solid var(--rule-strong);
-    border-radius: var(--radius-md);
-    background: var(--surface);
+    min-height: 2.25rem;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-field);
+    background: var(--card);
     color: var(--ink);
-    font-size: 1rem;
-    transition: border-color var(--dur-fast) var(--ease-standard);
+    font-size: 0.875rem;
+    line-height: 1.5rem;
+    transition:
+      border-color var(--dur-fast) var(--ease-standard),
+      box-shadow var(--dur-fast) var(--ease-standard);
   }
   .field::placeholder {
-    color: var(--faint);
+    color: var(--muted);
   }
-  .field:hover {
-    border-color: var(--ink);
+  .field:focus-visible {
+    outline: none;
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--focus) 35%, transparent);
   }
   .field[aria-invalid="true"] {
     border-color: var(--down);
   }
   textarea.field {
-    min-height: 6.5rem;
+    min-height: 4.5rem;
     resize: vertical;
   }
 
-  /* Segmented control: a row of pill buttons, the chosen one filled with ink. */
+  /* Segmented control: a tint track; the chosen option is a raised white card. */
   .seg {
     display: inline-flex;
     flex-wrap: wrap;
     gap: 2px;
-    padding: 4px;
-    border-radius: var(--radius-pill);
-    background: var(--sunk);
+    padding: 3px;
+    border-radius: var(--radius-field);
+    background: var(--tint);
   }
   .seg > button {
-    min-height: 2.5rem;
-    padding-inline: 1rem;
-    border-radius: var(--radius-pill);
+    min-height: 2rem;
+    padding-inline: 0.75rem;
+    border-radius: 0.6rem;
     color: var(--muted);
-    font-size: 0.9375rem;
-    font-weight: 600;
+    font-size: 0.8125rem;
+    font-weight: 500;
     transition:
       background-color var(--dur-fast) var(--ease-standard),
       color var(--dur-fast) var(--ease-standard);
@@ -435,22 +488,25 @@ a {
     color: var(--ink);
   }
   .seg > button[aria-checked="true"] {
-    background: var(--ink);
-    color: var(--page);
+    background: var(--card);
+    color: var(--ink);
+    box-shadow:
+      0 1px 2px var(--shadow),
+      inset 0 0 0 1px var(--rule);
   }
 
-  /* Loading placeholder: a soft rounded block with a slow sheen. Never holds numbers. */
+  /* Loading placeholder: a tint block with a slow sheen. Never holds numbers. */
   .skeleton {
     position: relative;
     overflow: hidden;
-    border-radius: var(--radius-sm);
-    background: var(--sunk);
+    border-radius: 0.75rem;
+    background: var(--tint);
   }
   .skeleton::after {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--surface) 55%, transparent), transparent);
+    background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--card) 60%, transparent), transparent);
     transform: translateX(-100%);
     animation: sweep 1.6s ease-in-out infinite;
   }
@@ -463,46 +519,27 @@ a {
 
 /* ---- Motion ---- */
 
-/* Headline pills wipe in from the left, then their words settle. */
-.reveal-pill {
-  animation: pill-wipe var(--dur-slow) var(--ease-out) both;
-  animation-delay: var(--delay, 0ms);
-}
-@keyframes pill-wipe {
-  from {
-    clip-path: inset(0 100% 0 0 round 9999px);
+/* Floating hero cards: a slow bob that keeps each card's tilt (--tilt). */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--tilt, 0deg));
   }
-  to {
-    clip-path: inset(0 0 0 0 round 9999px);
+  50% {
+    transform: translateY(var(--float-distance)) rotate(var(--tilt, 0deg));
   }
 }
-.reveal-word {
-  animation: rise var(--dur-base) var(--ease-out) both;
-  animation-delay: var(--delay, 0ms);
+.float {
+  transform: rotate(var(--tilt, 0deg));
 }
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(0.2em);
+@media (prefers-reduced-motion: no-preference) {
+  .float {
+    animation: float var(--dur-float) ease-in-out infinite;
   }
-}
-
-/* Percentile bars grow in once; the marker slides to its place. */
-.grow-in {
-  transform-origin: left;
-  animation: grow var(--dur-slow) var(--ease-out) both;
-}
-@keyframes grow {
-  from {
-    transform: scaleX(0);
-  }
-}
-.slide-in {
-  animation: slide var(--dur-slow) var(--ease-out) both;
-}
-@keyframes slide {
-  from {
-    left: 0;
+  /* Pause while the pointer or keyboard is on a card, so it holds still to be read and clicked. */
+  .float:hover,
+  .float:focus-within {
+    animation-play-state: paused;
   }
 }
 

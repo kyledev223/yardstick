@@ -148,81 +148,75 @@ node --no-experimental-require-module -e "require('@pump-fun/pump-sdk')"   # str
 
 ## 11. Design
 
-The look follows the design language studied in `docs/design-reference.md` (warm grey page, deep teal-black ink, bold rounded type, coloured word pills, a glyph field behind the page). Nothing from the reference site (code, fonts, images, text) is in this repo; its screenshots in `docs/design-reference/` are gitignored and stay local.
+The look (v3) follows the layout, type, components and motion studied in `docs/design-reference-v3.md` (calm paper and ink, white rounded cards, mono uppercase labels, medium-weight headlines with tight tracking, very little motion), with Yardstick's own colours. Nothing from the reference site (code, CSS, fonts, images, logo, text) is in this repo; its screenshots in `docs/design-reference-v3/` are gitignored and stay local. The brief is `docs/yardstick-redesign-v3-prompt.md`. The earlier v2 work is on the local branch `archive/redesign-v2`.
 
 ### Tokens
 
-All tokens live in **`src/app/globals.css`**: colours as CSS custom properties on `:root`, everything exposed to Tailwind through `@theme inline` (so `bg-page`, `text-muted`, `text-display`, `rounded-card`, `px-gutter`… work).
+All tokens live in **`src/app/globals.css`**: colours as CSS custom properties on `:root`, everything exposed to Tailwind through `@theme inline` (so `bg-paper`, `text-muted`, `text-display`, `rounded-card`, `px-gutter`, `pt-header`… work).
 
 | Group | Tokens | Notes |
 |---|---|---|
-| Surfaces | `--page`, `--surface`, `--soft`, `--sunk` | Page, cards, quiet panels, chips/tracks |
-| Text and lines | `--ink`, `--muted`, `--faint`, `--rule`, `--rule-strong`, `--focus` | Every text colour is AA on every surface |
-| Brand | `--teal` (large elements), `--teal-ink` (links, small teal text), `--btn`/`--on-btn` (primary button), `--yellow`, `--coral`, `--stone`, `--on-pill`, `--on-teal` | Yellow and coral are highlights only, never up/down. White on teal is for display-size text only |
+| Surfaces | `--paper` (page), `--card` (cards, form, popovers), `--tint` (quiet panels, pills, footer band), `--tint-strong` (hover fill) | |
+| Text and lines | `--ink`, `--muted`, `--rule` (decorative borders), `--rule-strong` (inputs, 3:1), `--focus` | Every text colour is AA on paper, card and tint |
+| Primary | `--primary` (button fill), `--primary-hover`, `--on-primary`, `--primary-ink` (primary as text: the standing number, links, "your coin") | Electric ultramarine |
+| Second accent | `--accent`, `--on-accent` | Coral, **fill only** with ink text: tags, badges, the board chip |
+| Ink panels | `--panel`, `--panel-edge`, `--on-panel`, `--panel-muted`, `--panel-accent` | The ink statement panel and the full-bleed "Today's top coins" section |
 | Data | `--data-you`, `--data-median`, `--data-range`, `--data-range-strong`, `--up`, `--down` | Up/down always also carry ▲/▼ and a sign |
-| Cursor field | `--field-dot`, `--field-square`, `--field-plus`, `--field-cell`, `--field-glyph` | Per theme |
-| Type | `text-giant`, `text-display`, `text-headline`, `text-title`, `text-lead`, `text-micro`, `text-figure-hero`, `text-figure` | Size, line height, tracking and weight together |
-| Space and width | `--gutter` (16px phones, 32px from 768px), `--gutter-inner`, `--section-sm/md/lg`; containers `max-w-page` (1440), `max-w-wide`, `max-w-narrow`, `max-w-measure` | |
-| Shape | `rounded-xs` … `rounded-2xl`, `rounded-card`, `rounded-pill` | |
-| Motion | `--dur-fast/base/slow/reveal`, `--stagger`, `ease-out`, `ease-in-out`, `ease-standard` | Everything stops under `prefers-reduced-motion` |
+| Type | `text-hero` (48→96px), `text-cta` (48→72), `text-display` (36→60), `text-title` (24), `text-stat` (30, figures), `text-lead`, `text-small`, `text-label`, `text-mono` | Size, line height, tracking and weight together; headlines are Geist 500 at −5 to −6% tracking |
+| Space and width | `--gutter` (16px phones, 20px from 640px), `--header-h` (space under the fixed header), `--section`; containers `max-w-page` (1280), `max-w-text` (1152), `max-w-measure` | |
+| Shape | `rounded-field` (12.8px: inputs, buttons), `rounded-card` (24px), `rounded-pill` | |
+| Motion | `--ease-standard`, `--dur-fast` (150ms hovers), `--dur-zoom` (500ms card zoom), `--dur-float` (7s), `--float-distance` (−14px), `--float-stagger` (−1.3s) | No scroll reveals and no page-load animation, matching the reference |
 
-Component classes in the same file: `.pill` + `.pill-teal/-ink/-plain/-yellow/-coral/-stone` (word highlights), `.chip`, `.btn` + `.btn-primary/-secondary/-lg` (44px minimum), `.field` and `.label` (form inputs), `.seg` (segmented control), `.skeleton`, `.num` (tabular figures), `.addr` (monospace for addresses and signatures).
+**The no-grey rule.** No neutral greys for backgrounds, surfaces, borders or secondary text. Quiet things are tinted ink-blue (`--tint`, `--muted`, `--rule`), or made quieter with weight and size. `tests/design-tokens.test.ts` fails if any of these tokens becomes a neutral grey.
 
-`tests/design-tokens.test.ts` reads the colours straight from `globals.css` and checks every text, data, focus and glyph pair for WCAG AA in both themes, and that the two dark blocks stay identical. Change a colour, run `npm test`.
+| | Light | Dark |
+|---|---|---|
+| Paper / card / tint | `#f8f9ff` / `#ffffff` / `#eceffe` | `#080b26` / `#0f1438` / `#141a45` |
+| Ink / muted | `#070a24` / `#464d7a` | `#f3f4ff` / `#a9b0dd` |
+| Primary (fill / text) | `#2442ff` / `#2442ff` | `#3a55ff` / `#8c9bff` |
+| Accent (fill only) | `#ff6a3d` | `#ff7a4f` |
+| Up / down | `#00754a` / `#d6143f` | `#3ee49a` / `#ff6f8e` |
 
-`/design` shows every token, the cursor field and a dashboard sample. It's dev-only (404 in production).
+Component classes in the same file: `.eyebrow` (mono uppercase label), `.btn` + `.btn-primary/-ghost/-outline/-on-panel/-sm/-lg`, `.tag` + `.tag-outline/-tint/-accent/-primary`, `.card`, `.card-sm`, `.panel`, `.link`, `.field`, `.label`, `.help`, `.seg` (segmented control), `.skeleton`, `.float` (floating hero card), `.num` (tabular figures), `.addr` (monospace for addresses and signatures).
+
+`tests/design-tokens.test.ts` reads the colours straight from `globals.css` and checks every text, data and focus pair for WCAG AA in both themes, that the two dark blocks stay identical, and the no-grey rule. Change a colour, run `npm test`.
+
+`/design` shows every token (read from `globals.css`), the type scale, controls and the components, using real coins from the database. It's dev-only (404 in production).
 
 ### Fonts
 
 | Font | Use | Source | Licence |
 |---|---|---|---|
-| Figtree (variable 300–900) | Everything: headings at 800, text at 400–700, numbers with `tabular-nums` | `next/font/google` in `src/app/layout.tsx` (self-hosted at build, no request to Google at runtime) | SIL Open Font License 1.1 |
-| Figtree 500 and 800 (static `.woff`) | The share card (`next/og` can't use variable fonts) | `assets/fonts/`, from the Fontsource package | SIL OFL 1.1, text in `assets/fonts/OFL-Figtree.txt` |
-| IBM Plex Mono 400/500 | Wallet addresses, mints and transaction signatures only | `next/font/google` | SIL OFL 1.1 |
+| Geist (variable) | Everything: headlines at 500, text at 400, the footer wordmark at 600, figures with `tabular-nums` | `next/font/google` in `src/app/layout.tsx` (self-hosted at build) | SIL Open Font License 1.1 |
+| Geist Mono (variable) | Eyebrows, step numbers, tickers, tags, table headers, addresses and signatures | `next/font/google` | SIL OFL 1.1 |
+| Geist 400/500 and Geist Mono 400 (static `.ttf`) | The share card (`next/og` can't use variable fonts) | `assets/fonts/` | SIL OFL 1.1, text in `assets/fonts/OFL-Geist.txt` |
+
+The reference uses the same two families, so no substitute was needed.
 
 ### Themes
 
 - Light is the default; dark follows the system setting. The header toggle cycles **system → light → dark** and remembers the choice in `localStorage` (`ys-theme`), applied before paint by the inline script in `src/components/theme-toggle.tsx`.
 - In CSS, `:root` holds the light values; the dark values are in two identical blocks (system preference and explicit choice). Edit both, or the token test fails.
-- `body` and `html` always get an explicit `--page` background.
+- Dark is a deep ink-blue, not grey-black. Ink panels go one step deeper and get a `--panel-edge` border so they still read as panels.
+- `body` and `html` always get an explicit `--paper` background.
 
-### Cursor field (`<CursorField />`)
+### Components and how to tune them
 
-**What it is.** One 2D `<canvas>`, mounted once as the first child of `<body>` in `src/app/layout.tsx`, behind a positioned content layer. Pointer movement leaves irregular clusters of glyphs (dots, squares, teal +) on a 32px grid along its recent path; each cluster grows cell by cell, holds about a second, then fades cell by cell. With no pointer, small ambient blooms appear every 1.3–2.6 s.
-
-**Files.** `src/lib/cursor-field.ts` is the engine (pure logic, unit-tested in `tests/cursor-field.test.ts`); `src/components/cursor-field.tsx` is the canvas, listeners and drawing.
-
-**Behaviour by situation.**
-- Touch screens: ambient blooms only (taps and scrolling don't trigger anything).
-- `prefers-reduced-motion`: one still frame that scrolls with the page; no animation, no pointer response.
-- Tab hidden: the loop stops. Idle with nothing lit: it sleeps until the next ambient bloom.
-- Performance: at most 30 frames per second, device pixel ratio capped at 1.5. The canvas covers the viewport plus a margin and scrolls natively with the page, so glyphs never lag during scroll. Measured cost: about 0.2–0.4% of one core for the field's own work (1.9% with 4× CPU slowdown).
-- Readability: dot and square colours keep all text at AA (tested). Teal + glyphs are never placed under small text (paragraphs, links, labels, table cells, form fields, SVG text, or anything with `data-field-protect`).
-
-**Strength by area.** Put `data-field` on any element; the smallest containing area wins:
-
-| Value | Effect | Used on |
+| Component | File | What to tune |
 |---|---|---|
-| `full` | All cells, full opacity, 12% + glyphs | Landing hero and closing section, 404 page |
-| `calm` (default) | 60% density, 85% opacity, 5% + | Everything not marked |
-| `quiet` | 28% density, 55% opacity, no + | Dashboards, tables, charts, status page |
-| `off` | Nothing | Available where needed |
-
-**Tuning.**
-
-| What | Where |
-|---|---|
-| Glyph colours (per theme) | `--field-dot`, `--field-square`, `--field-plus` in `globals.css` (keep dots/squares within 1.35:1 of `--page`; the test checks) |
-| Grid pitch and glyph size | `--field-cell` (32px), `--field-glyph` (14px) in `globals.css` |
-| Strength per level | `LEVELS` in `src/lib/cursor-field.ts` (`density`, `alpha`, `plus`) |
-| Default level | `FIELD.defaultLevel`, or `<CursorField fallback="quiet" />` |
-| How far the trail eases behind the pointer | `FIELD.follow` (ms time constant; larger = lazier) |
-| Cluster size and spacing | `FIELD.stampRadius` (cells), `FIELD.stampEvery` (px of pointer travel), `FIELD.noiseCut` (higher = sparser), `FIELD.noiseScale` |
-| Growth and fade | `FIELD.grow`, `FIELD.growJitter`, `FIELD.hold`, `FIELD.fadeIn`, `FIELD.fadeOut` |
-| Ambient blooms | `FIELD.ambientEvery`, `FIELD.ambientRadius` |
-| Reduced-motion still frame density | `FIELD.staticCut` (higher = sparser) |
-| Frame rate and pixel-ratio cap | `FPS` and `MAX_DPR` in `src/components/cursor-field.tsx` |
+| Header | `src/components/site-header.tsx` | Fixed, inset 16px (28px from md), rounded, `bg-paper/85` with blur. Below `lg` the nav, wallet and theme move into `MobileMenu`; below `sm` a second row holds the badge and search. If you change its height, update `--header-h` |
+| ⌘K search | `src/components/command-search.tsx`, `src/app/api/search/route.ts` | One dialog for the site; `openSearch()` or `<CheckCoinButton />` opens it. Pasted mints and pump.fun/Solscan links go straight to the dashboard; text searches tracked coins by symbol prefix or name (`searchCoins` in `src/lib/data/lists.ts`, Yardstick launches first, 8 results, 300 searches/hour per IP) |
+| Phone menu | `src/components/mobile-menu.tsx` | Native `<dialog>`: focus is trapped, Esc and the backdrop close it |
+| Floating coin cards | `src/components/coin-strip.tsx` | Real recent Yardstick launches with an image (`recentLaunches(6)`). `LAYOUTS` holds the balanced positions for 1–6 cards; none are shown without launches. Bob timing in the motion tokens; cards pause on hover/focus and stand still under reduced motion. Phones get `CoinRow`, a sideways-scrolling row |
+| Steps | `src/components/step-list.tsx` | "01 / LABEL" mono numbers over one sentence each |
+| Launch studio | `src/app/launch/launch-form.tsx`, `src/components/launch-preview-card.tsx` | One component on the landing page (`#launch`) and on `/launch`: form card on the left, tint panel with the live preview and pre-launch checks on the right |
+| Coin card | `src/components/coin-card.tsx` | Square image with rank chip, name and line left, `$SYMBOL` and figure right, standing below; zooms to 1.03 on hover and focus. `onPanel` for ink sections |
+| Today's board | `src/components/board-panel.tsx`, `src/components/countdown.tsx` | The coin standing highest today against the baseline, its holders and curve chips, and the time to UTC midnight (ticks every second). No prize or winner wording |
+| Section heads | `src/components/page-head.tsx` | `SectionHead` (eyebrow, title left, note right) and `PageHead` (the same as an h1, clearing the fixed header) |
+| Coin images | `src/components/coin-image.tsx` | The coin's image, or its first letter on a tint tile if it has none or the image fails to load |
+| Footer | `src/components/site-footer.tsx` | Closing call to action, mono link row, disclaimer, and the giant cropped wordmark (`text-[20.5vw]`) |
+| Bars and charts | `src/components/percentile-bar.tsx`, `sparkline.tsx`, `trajectory-chart.tsx` | Use the data tokens only |
 
 ### Share card
 
-`src/app/coin/[mint]/opengraph-image.tsx` renders each coin's card on request with `next/og`: symbol, name, age, the standing in a teal pill, the percentile bar and the wordmark, always in the light theme.
+`src/app/coin/[mint]/opengraph-image.tsx` renders each coin's card on request with `next/og`: image, `$SYMBOL`, name and age, the standing in the primary colour, the percentile bar and the wordmark tile, always in the light theme.

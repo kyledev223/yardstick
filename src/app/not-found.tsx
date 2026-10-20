@@ -1,21 +1,19 @@
 import Link from "next/link";
-import { CheckForm } from "@/components/check-form";
+import { CheckCoinButton } from "@/components/command-search";
 
 export default function NotFound() {
   return (
-    <div data-field="full" className="px-gutter py-section-sm">
-      <div className="mx-auto max-w-page">
-        <p className="font-semibold text-muted">Page not found</p>
-        <h1 className="mt-2 text-giant">
-          Off the <span className="pill pill-coral">scale</span>
-        </h1>
-        <p className="mt-8 max-w-measure text-lead text-muted">There&apos;s no page at this address. To check a coin, paste its mint address.</p>
-        <div className="mt-8 max-w-narrow">
-          <CheckForm />
+    <div className="flex min-h-[80svh] items-center px-gutter pt-header pb-24">
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
+        <p className="eyebrow">404 · Page not found</p>
+        <h1 className="text-cta">Off the scale.</h1>
+        <p className="max-w-md text-small text-muted">There&apos;s no page at this address. To check a coin, paste its mint address or search its symbol.</p>
+        <div className="flex flex-col items-center gap-3 sm:flex-row">
+          <CheckCoinButton className="btn btn-primary" />
+          <Link href="/" className="btn btn-ghost">
+            Go to the home page
+          </Link>
         </div>
-        <Link href="/" className="btn btn-secondary mt-8">
-          Go to the home page
-        </Link>
       </div>
     </div>
   );

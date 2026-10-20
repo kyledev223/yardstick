@@ -108,17 +108,17 @@ export function TrajectoryChart({ coin, band, metric, groupLabel }: { coin: Pt[]
         {medPath && <path d={medPath} fill="none" stroke="var(--data-median)" strokeWidth="2" strokeDasharray="5 4" />}
         {coinPath && <path d={coinPath} fill="none" stroke="var(--data-you)" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />}
         {coin.map((p) => (
-          <circle key={p.age} cx={geo.x(p.age)} cy={geo.y(p.value)} r="4.5" fill="var(--data-you)" stroke="var(--surface)" strokeWidth="2" />
+          <circle key={p.age} cx={geo.x(p.age)} cy={geo.y(p.value)} r="4.5" fill="var(--data-you)" stroke="var(--card)" strokeWidth="2" />
         ))}
 
         {/* direct labels */}
         {lastCoin && (
-          <text x={Math.min(geo.x(lastCoin.age) + 8, W - M.r - 60)} y={geo.y(lastCoin.value) - 8} fontSize="12" fontWeight="700" fill="var(--ink)">
+          <text x={Math.min(geo.x(lastCoin.age) + 8, W - M.r - 60)} y={geo.y(lastCoin.value) - 8} fontSize="12" fontWeight="500" fill="var(--primary-ink)">
             This coin
           </text>
         )}
         {lastBand && (
-          <text x={geo.x(lastBand.age) - 4} y={geo.y(lastBand.p50) - 6} textAnchor="end" fontSize="11" fontWeight="600" fill="var(--muted)">
+          <text x={geo.x(lastBand.age) - 4} y={geo.y(lastBand.p50) - 6} textAnchor="end" fontSize="11" fontWeight="500" fill="var(--muted)">
             Median
           </text>
         )}
@@ -130,7 +130,7 @@ export function TrajectoryChart({ coin, band, metric, groupLabel }: { coin: Pt[]
       </svg>
       </div>
 
-      <div className="mt-3 flex min-h-[1.5rem] flex-wrap items-center gap-x-5 gap-y-1.5 text-micro text-muted">
+      <div className="mt-3 flex min-h-[1.5rem] flex-wrap items-center gap-x-5 gap-y-1.5 text-label text-muted">
         {hAge !== null ? (
           <span className="num text-ink">
             At {fmtAge(hAge)}: {hCoin ? <>this coin {fmt(hCoin.value)}</> : "no reading for this coin"}
@@ -158,15 +158,15 @@ export function TrajectoryChart({ coin, band, metric, groupLabel }: { coin: Pt[]
       </figcaption>
 
       <details className="mt-3 text-sm">
-        <summary className="inline-flex min-h-11 cursor-pointer items-center font-semibold text-teal-ink">Show as table</summary>
+        <summary className="inline-flex min-h-11 cursor-pointer items-center link">Show as table</summary>
         <table className="num mt-2 w-full text-left text-sm">
           <thead className="text-muted">
             <tr>
-              <th className="py-1 font-normal">Age</th>
-              <th className="py-1 font-normal">This coin</th>
-              <th className="py-1 font-normal">25th</th>
-              <th className="py-1 font-normal">Median</th>
-              <th className="py-1 font-normal">75th</th>
+              <th className="py-1 font-mono text-mono font-normal tracking-[0.12em] uppercase">Age</th>
+              <th className="py-1 font-mono text-mono font-normal tracking-[0.12em] uppercase">This coin</th>
+              <th className="py-1 font-mono text-mono font-normal tracking-[0.12em] uppercase">25th</th>
+              <th className="py-1 font-mono text-mono font-normal tracking-[0.12em] uppercase">Median</th>
+              <th className="py-1 font-mono text-mono font-normal tracking-[0.12em] uppercase">75th</th>
             </tr>
           </thead>
           <tbody>

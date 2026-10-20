@@ -35,13 +35,19 @@ const subscribe = (l: () => void) => {
   return () => listeners.delete(l);
 };
 
-export function ThemeToggle() {
+export function ThemeToggle({ className = "" }: { className?: string }) {
   const mode = useSyncExternalStore(subscribe, read, () => "system" as Mode);
   const next = ORDER[(ORDER.indexOf(mode) + 1) % ORDER.length];
   const Icon = mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
   return (
-    <button type="button" onClick={() => write(next)} className="grid h-11 w-11 place-items-center rounded-pill text-muted hover:bg-sunk hover:text-ink" aria-label={`Theme: ${mode}. Switch to ${next}.`} title={`Theme: ${mode}`}>
-      <Icon size={19} strokeWidth={2} />
+    <button
+      type="button"
+      onClick={() => write(next)}
+      className={`grid h-8 w-8 place-items-center rounded-pill text-muted transition-colors duration-(--dur-fast) hover:bg-tint hover:text-ink ${className}`}
+      aria-label={`Theme: ${mode}. Switch to ${next}.`}
+      title={`Theme: ${mode}`}
+    >
+      <Icon size={15} strokeWidth={2} aria-hidden />
     </button>
   );
 }

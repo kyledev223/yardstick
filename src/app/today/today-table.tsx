@@ -2,6 +2,8 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { CoinImage } from "@/components/coin-image";
+import { CheckCoinButton } from "@/components/command-search";
 import { PercentileBar } from "@/components/percentile-bar";
 import { api } from "@/lib/client/api";
 import { AGE_BUCKETS, type AgeBucketKey, type GroupKey } from "@/lib/config";
@@ -40,10 +42,10 @@ export function TodayTable() {
   }, [rows, age, sort]);
 
   const th = (key: SortKey, label: string, cls = "") => (
-    <th scope="col" className={`py-3 font-bold ${cls}`} aria-sort={sort.key === key ? (sort.desc ? "descending" : "ascending") : "none"}>
-      <button type="button" onClick={() => setSort((s) => ({ key, desc: s.key === key ? !s.desc : true }))} className="inline-flex min-h-10 items-center gap-1 rounded-pill hover:text-teal-ink">
+    <th scope="col" className={`py-3 font-normal ${cls}`} aria-sort={sort.key === key ? (sort.desc ? "descending" : "ascending") : "none"}>
+      <button type="button" onClick={() => setSort((s) => ({ key, desc: s.key === key ? !s.desc : true }))} className="inline-flex min-h-8 items-center gap-1 rounded-md font-mono text-mono tracking-[0.12em] uppercase transition-opacity duration-(--dur-fast) hover:opacity-50">
         {label}
-        {sort.key === key && (sort.desc ? <ArrowDown size={14} strokeWidth={2.5} aria-hidden /> : <ArrowUp size={14} strokeWidth={2.5} aria-hidden />)}
+        {sort.key === key && (sort.desc ? <ArrowDown size={12} strokeWidth={2.5} aria-hidden /> : <ArrowUp size={12} strokeWidth={2.5} aria-hidden />)}
       </button>
     </th>
   );
@@ -70,13 +72,13 @@ export function TodayTable() {
             </button>
           ))}
         </div>
-        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2.5 rounded-pill bg-sunk px-4 font-semibold">
-          <input type="checkbox" checked={graduated} onChange={(e) => setGraduated(e.target.checked)} className="h-5 w-5 accent-(--btn)" />
+        <label className="inline-flex min-h-[2.375rem] cursor-pointer items-center gap-2 rounded-field bg-tint px-3 text-[0.8125rem] font-medium">
+          <input type="checkbox" checked={graduated} onChange={(e) => setGraduated(e.target.checked)} className="h-4 w-4 accent-(--primary)" />
           Graduated only
         </label>
         <label className="inline-flex items-center gap-2 sm:ml-auto">
-          <span className="font-semibold text-muted">Age</span>
-          <select value={age} onChange={(e) => setAge(e.target.value as typeof age)} className="field w-auto rounded-pill py-2 pr-9 font-semibold">
+          <span className="font-mono text-mono tracking-[0.12em] text-muted uppercase">Age</span>
+          <select value={age} onChange={(e) => setAge(e.target.value as typeof age)} className="field w-auto pr-9 font-medium">
             <option value="all">Any age</option>
             {AGE_BUCKETS.map((b) => (
               <option key={b.key} value={b.key}>
@@ -87,34 +89,42 @@ export function TodayTable() {
         </label>
       </div>
 
-      <div data-field="quiet" className="mt-6">
+      <div className="mt-6">
         {error ? (
-          <p className="rounded-lg bg-surface p-6 text-muted ring-1 ring-rule">{error}</p>
+          <p className="card p-6 text-muted">{error}</p>
         ) : !shown ? (
           <div className="space-y-3" aria-busy="true" aria-label="Loading">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="skeleton h-16 rounded-lg" />
+              <div key={i} className="skeleton h-16 rounded-2xl" />
             ))}
           </div>
         ) : shown.length === 0 ? (
-          <div className="flex flex-wrap items-center justify-between gap-6 rounded-lg bg-surface p-6 ring-1 ring-rule md:p-8">
-            <p className="text-title">{graduated ? "No graduated Yardstick launches in this range yet." : range === "today" ? "No launches yet today. Be the first." : "No launches in the last 7 days."}</p>
-            <Link href="/launch" className="btn btn-primary">
-              Launch a coin
-            </Link>
+          <div className="card flex flex-wrap items-center justify-between gap-6 p-6 md:p-8">
+            <div className="max-w-xl">
+              <p className="text-title">{graduated ? "No graduated Yardstick launches in this range yet." : range === "today" ? "No launches yet today. Be the first." : "No launches in the last 7 days."}</p>
+              <p className="mt-2 text-small text-muted">
+                {graduated ? "A coin graduates when its bonding curve fills." : "The table starts fresh at UTC midnight."} Launch a coin to put it on the board, or check where any pump.fun coin stands.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/launch" className="btn btn-primary">
+                Launch a coin
+              </Link>
+              <CheckCoinButton className="btn btn-outline" />
+            </div>
           </div>
         ) : (
           <>
             {/* Desktop table */}
-            <div className="hidden rounded-xl bg-surface px-6 pb-2 ring-1 ring-rule md:block">
+            <div className="card hidden px-6 pb-2 md:block">
               <table className="w-full text-left">
                 <caption className="sr-only">Yardstick launches ranked by standing among {GROUP_LABEL[group]}</caption>
-                <thead className="text-sm text-ink">
-                  <tr className="border-b-2 border-ink">
-                    <th scope="col" className="w-12 py-3 font-bold">
+                <thead className="text-muted">
+                  <tr className="border-b border-rule">
+                    <th scope="col" className="w-12 py-3 font-mono text-mono font-normal tracking-[0.12em] uppercase">
                       #
                     </th>
-                    <th scope="col" className="py-3 font-bold">
+                    <th scope="col" className="py-3 font-mono text-mono font-normal tracking-[0.12em] uppercase">
                       Coin
                     </th>
                     {th("ageSeconds", "Age")}
@@ -126,15 +136,15 @@ export function TodayTable() {
                 </thead>
                 <tbody>
                   {shown.map((r, i) => (
-                    <tr key={r.mint} className="border-b border-rule last:border-0 hover:bg-soft">
-                      <td className="num py-4 font-semibold text-muted">{i + 1}</td>
+                    <tr key={r.mint} className="border-b border-rule text-small transition-colors duration-(--dur-fast) last:border-0 hover:bg-tint/60">
+                      <td className="num py-4 font-mono text-mono text-muted">{String(i + 1).padStart(2, "0")}</td>
                       <td className="py-4">
                         <CoinCell r={r} />
                       </td>
                       <td className="num py-4 text-muted">{fmtAge(r.ageSeconds)}</td>
-                      <td className="num py-4 text-right font-semibold">{fmtInt(r.holders)}</td>
-                      <td className="num py-4 text-right font-semibold">{fmtSol(r.netInflowSol)}</td>
-                      <td className="num py-4 text-right font-semibold">{r.graduated ? "done" : fmtPct(r.curveProgress)}</td>
+                      <td className="num py-4 text-right font-medium">{fmtInt(r.holders)}</td>
+                      <td className="num py-4 text-right font-medium">{fmtSol(r.netInflowSol)}</td>
+                      <td className="num py-4 text-right font-medium">{r.graduated ? "done" : fmtPct(r.curveProgress)}</td>
                       <td className="py-4 pl-8">
                         <Standing r={r} />
                       </td>
@@ -147,27 +157,27 @@ export function TodayTable() {
             {/* Phones: stacked cards */}
             <ol className="space-y-3 md:hidden">
               {shown.map((r, i) => (
-                <li key={r.mint} className="rounded-lg bg-surface p-4 ring-1 ring-rule">
+                <li key={r.mint} className="card-sm p-4">
                   <div className="flex items-start gap-3">
-                    <span className="num w-6 pt-2 font-semibold text-muted">{i + 1}</span>
+                    <span className="num w-6 pt-3 font-mono text-mono text-muted">{String(i + 1).padStart(2, "0")}</span>
                     <div className="min-w-0 flex-1">
                       <CoinCell r={r} />
-                      <dl className="num mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                      <dl className="num mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-small">
                         <div>
-                          <dt className="font-sans text-micro text-muted">Age</dt>
-                          <dd className="font-semibold">{fmtAge(r.ageSeconds)}</dd>
+                          <dt className="font-mono text-mono tracking-[0.12em] text-muted uppercase">Age</dt>
+                          <dd className="font-medium">{fmtAge(r.ageSeconds)}</dd>
                         </div>
                         <div>
-                          <dt className="font-sans text-micro text-muted">Holders</dt>
-                          <dd className="font-semibold">{fmtInt(r.holders)}</dd>
+                          <dt className="font-mono text-mono tracking-[0.12em] text-muted uppercase">Holders</dt>
+                          <dd className="font-medium">{fmtInt(r.holders)}</dd>
                         </div>
                         <div>
-                          <dt className="font-sans text-micro text-muted">Net SOL in</dt>
-                          <dd className="font-semibold">{fmtSol(r.netInflowSol)}</dd>
+                          <dt className="font-mono text-mono tracking-[0.12em] text-muted uppercase">Net SOL in</dt>
+                          <dd className="font-medium">{fmtSol(r.netInflowSol)}</dd>
                         </div>
                         <div>
-                          <dt className="font-sans text-micro text-muted">Curve</dt>
-                          <dd className="font-semibold">{r.graduated ? "done" : fmtPct(r.curveProgress)}</dd>
+                          <dt className="font-mono text-mono tracking-[0.12em] text-muted uppercase">Curve</dt>
+                          <dd className="font-medium">{r.graduated ? "done" : fmtPct(r.curveProgress)}</dd>
                         </div>
                       </dl>
                       <div className="mt-4">
@@ -188,17 +198,12 @@ export function TodayTable() {
 function CoinCell({ r }: { r: RankRow }) {
   return (
     <Link href={`/coin/${r.mint}`} className="group flex items-center gap-3">
-      {r.image ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={r.image} alt="" width={40} height={40} className="h-10 w-10 shrink-0 rounded-md object-cover ring-1 ring-rule" referrerPolicy="no-referrer" loading="lazy" />
-      ) : (
-        <span className="h-10 w-10 shrink-0 rounded-md bg-sunk" aria-hidden />
-      )}
+      <CoinImage src={r.image} symbol={r.symbol} size={40} className="h-10 w-10 rounded-xl" />
       <span className="min-w-0">
-        <span className="block truncate font-bold group-hover:underline group-hover:underline-offset-4">{r.name}</span>
-        <span className="num block text-sm text-muted">
+        <span className="block truncate font-medium group-hover:underline group-hover:underline-offset-4">{r.name}</span>
+        <span className="block font-mono text-mono text-muted">
           ${r.symbol}
-          {r.graduated && <span className="ml-2 font-sans font-semibold text-up">graduated</span>}
+          {r.graduated && <span className="ml-2 text-up">graduated</span>}
         </span>
       </span>
     </Link>
@@ -206,10 +211,10 @@ function CoinCell({ r }: { r: RankRow }) {
 }
 
 function Standing({ r }: { r: RankRow }) {
-  if (r.percentile === null) return <span className="text-sm text-muted">Not enough data yet</span>;
+  if (r.percentile === null) return <span className="text-small text-muted">Not enough data yet</span>;
   return (
     <div>
-      <div className="num mb-1 font-bold">Top {Math.max(1, Math.round(100 - r.percentile))}%</div>
+      <div className="num mb-1 font-medium text-primary-ink">Top {Math.max(1, Math.round(100 - r.percentile))}%</div>
       <PercentileBar percentile={r.percentile} label={`${r.name} standing`} />
     </div>
   );

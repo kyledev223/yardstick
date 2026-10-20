@@ -1,170 +1,200 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowDown, ArrowUpRight, FlaskConical } from "lucide-react";
 import Link from "next/link";
-import { CheckForm } from "@/components/check-form";
-import { PercentileBar } from "@/components/percentile-bar";
-import { StepDots } from "@/components/step-dots";
-import { TodayStrip } from "@/components/today-strip";
+import { after, connection } from "next/server";
+import { BoardPanel } from "@/components/board-panel";
+import { CoinCard } from "@/components/coin-card";
+import { CoinRow, CoinStrip } from "@/components/coin-strip";
+import { CheckCoinButton } from "@/components/command-search";
+import { SectionHead } from "@/components/page-head";
+import { StepList } from "@/components/step-list";
+import { hasDatabase } from "@/lib/db";
+import { leaderboard, recentLaunches, type CoinChip, type RankRow } from "@/lib/data/lists";
+import { fmtAge, fmtSol } from "@/lib/format";
+import { maybeTick } from "@/lib/jobs/tick";
+import { landingPreviewEnabled } from "@/lib/preview";
+import { LaunchForm } from "./launch/launch-form";
 
-/** Small, clearly labelled pieces of the real UI. They illustrate; they don't report. */
-function StepFigure({ step }: { step: 1 | 2 | 3 }) {
-  if (step === 1) {
-    return (
-      <div className="space-y-3 rounded-lg bg-surface p-5 ring-1 ring-rule" aria-hidden>
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-sm text-muted">Name</span>
-          <span className="h-3 w-28 rounded-pill bg-sunk" />
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-sm text-muted">Symbol</span>
-          <span className="h-3 w-14 rounded-pill bg-sunk" />
-        </div>
-        <span className="btn btn-primary min-h-9 px-4 text-sm">Launch coin</span>
-        <p className="text-micro text-muted">Example form</p>
-      </div>
-    );
+const STEPS = [
+  { label: "Launch", text: "A name, a symbol and an image, then one transaction from your own wallet creates the coin on pump.fun." },
+  { label: "Measure", text: "From five minutes old, Yardstick reads holders, buyers, net SOL in, the curve and warning signs at fixed ages." },
+  { label: "Compare", text: "Each reading is ranked against pump.fun coins and Yardstick launches of exactly the same age." },
+  { label: "Improve", text: "Plain notes point at the metrics where your coin trails coins that went on to graduate." },
+];
+
+const MEASURES = [
+  { label: "Holders and distribution", text: "Holders, unique buyers, and how much of the supply the top 10 wallets hold." },
+  { label: "Buying and selling", text: "Buys against sells, by count and by SOL, and the net SOL that has come in." },
+  { label: "Bonding curve", text: "How full the pump.fun curve is, and whether the coin has graduated." },
+  { label: "Warning signs", text: "Sniper share, fresh wallets, and whether the creator has sold." },
+];
+
+export default async function Home({ searchParams }: PageProps<"/">) {
+  await connection();
+  // Dev-only: /?preview=baseline fills the page with sampled pump.fun coins (never in production; see src/lib/preview.ts).
+  const preview = landingPreviewEnabled(process.env.NODE_ENV, (await searchParams).preview);
+  const source = preview ? "baseline" : "yardstick";
+  let recent: CoinChip[] = [];
+  let rows: RankRow[] | null = [];
+  if (hasDatabase()) {
+    [recent, rows] = await Promise.all([recentLaunches(6, source).catch(() => []), leaderboard({ range: "today", graduatedOnly: false, group: "baseline", source }).catch(() => null)]);
   }
-  if (step === 2) {
-    return (
-      <div className="rounded-lg bg-surface p-5 ring-1 ring-rule" aria-hidden>
-        <p className="text-sm text-muted">Holders, compared at the same age</p>
-        <div className="mt-4">
-          <PercentileBar percentile={72} label="Example" showScale />
-        </div>
-        <p className="mt-3 text-micro text-muted">Example figure</p>
-      </div>
-    );
-  }
+  // Busy page: keep background measuring going if the cron job is late.
+  after(() => maybeTick("landing"));
+  const top = rows?.slice(0, 6) ?? [];
+  const ranked = rows?.find((r) => r.percentile !== null) ?? null;
+  // The preview has no standings to rank by yet, so it shows the coin with the most holders and says so.
+  const leader = ranked ?? (preview ? (rows?.[0] ?? null) : null);
+
   return (
-    <div className="space-y-3 rounded-lg bg-surface p-5 text-sm ring-1 ring-rule" aria-hidden>
-      <p className="flex gap-2.5">
-        <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-pill bg-yellow" />
-        Top 10 wallets hold a larger share than coins that graduated did at this age.
-      </p>
-      <p className="flex gap-2.5 text-muted">
-        <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-pill bg-sunk" />
-        No sells from the creator wallet so far.
-      </p>
-      <p className="text-micro text-muted">Example notes</p>
-    </div>
+    <>
+      {preview && (
+        <p role="status" className="tag tag-accent fixed bottom-4 left-1/2 z-40 -translate-x-1/2 px-3 py-1.5 shadow-[0_12px_35px_var(--shadow)]">
+          <FlaskConical size={12} aria-hidden /> Dev preview<span className="sm:hidden">: sampled coins</span>
+          <span className="hidden sm:inline">: sampled pump.fun coins, not Yardstick launches</span>
+        </p>
+      )}
+
+      {/* Hero, with recent launches floating around it */}
+      <section className="relative flex min-h-svh overflow-hidden px-gutter pt-header">
+        <CoinStrip coins={recent} />
+        <div className="relative mx-auto flex w-full max-w-4xl flex-col items-center justify-center gap-6 pb-24 text-center">
+          <h1 className="text-hero">
+            Launch a coin.
+            <br />
+            See where it stands.
+          </h1>
+          <p className="max-w-md text-lead text-muted">Free. No fees. Your coin lives on pump.fun, and Yardstick shows how it compares with every coin of the same age.</p>
+          <div className="flex flex-col items-center gap-3 sm:flex-row">
+            <a href="#launch" className="btn btn-primary">
+              Launch a coin <ArrowUpRight size={16} aria-hidden />
+            </a>
+            <CheckCoinButton />
+          </div>
+          <div className="mt-6 w-full">
+            <CoinRow coins={recent} />
+          </div>
+        </div>
+        <a href="#how" className="eyebrow absolute bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 transition-opacity duration-(--dur-fast) hover:opacity-50">
+          How it works <ArrowDown size={12} aria-hidden />
+        </a>
+      </section>
+
+      {/* Statement and the four steps */}
+      <section id="how" aria-labelledby="how-h" className="flex min-h-svh items-center px-gutter py-section">
+        <div className="mx-auto w-full max-w-text">
+          <p className="eyebrow">How it works</p>
+          <h2 id="how-h" className="mt-6 text-hero">
+            Same age.
+            <br />
+            Same yardstick.
+          </h2>
+          <StepList steps={STEPS} className="mt-16" />
+        </div>
+      </section>
+
+      {/* The real launch form with its live preview */}
+      <section id="launch" aria-labelledby="launch-h" className="px-gutter py-section">
+        <div className="mx-auto max-w-text">
+          <SectionHead
+            id="launch-h"
+            title="From idea to a live coin."
+            note="You pay only Solana's network fee and pump.fun's creation cost. The coin's key is made in this browser and never leaves it."
+          />
+          <div className="mt-12 md:mt-16">
+            <LaunchForm />
+          </div>
+        </div>
+      </section>
+
+      {/* What we measure: the ink panel */}
+      <section id="measure" aria-labelledby="measure-h" className="px-gutter py-section">
+        <div className="panel mx-auto flex max-w-text flex-col items-start gap-8 p-8 sm:p-14">
+          <p className="eyebrow text-panel-muted">What we measure</p>
+          <h2 id="measure-h" className="max-w-4xl text-display">
+            Every reading, compared with coins exactly as old as yours.
+          </h2>
+          <p className="max-w-2xl text-small text-panel-muted">Volume is left out on purpose: wash trading makes it cheap to fake, so it can&apos;t push a coin up the board.</p>
+          <StepList steps={MEASURES} onPanel className="w-full" />
+          <Link href="/how" className="btn btn-on-panel">
+            See how it&apos;s measured
+          </Link>
+        </div>
+      </section>
+
+      {/* Today's top coins: full-bleed ink section */}
+      <section id="today" aria-labelledby="today-h" className="bg-panel px-gutter py-section text-on-panel">
+        <div className="mx-auto max-w-page">
+          <SectionHead
+            onPanel
+            id="today-h"
+            eyebrow={preview ? "Preview · sampled pump.fun coins today" : "Launched on Yardstick today"}
+            title="Today's top coins."
+            action={
+              <Link href="/today" className="inline-flex shrink-0 items-center gap-2 text-small font-medium transition-opacity duration-(--dur-fast) hover:opacity-60">
+                See the full table <ArrowUpRight size={16} aria-hidden />
+              </Link>
+            }
+          />
+          {rows === null ? (
+            <div className="mt-12 flex flex-col items-start gap-6 rounded-card p-8 shadow-[inset_0_0_0_1px_var(--rule-strong)] sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-title">Today&apos;s coins couldn&apos;t load. Refresh to try again.</p>
+              <CheckCoinButton className="btn btn-on-panel" />
+            </div>
+          ) : top.length === 0 ? (
+            <EmptyTopCoins />
+          ) : (
+            <ol className="mt-12 grid grid-cols-2 gap-x-3 gap-y-8 md:grid-cols-3 lg:grid-cols-6">
+              {top.map((r, i) => (
+                <li key={r.mint}>
+                  <CoinCard
+                    onPanel
+                    href={`/coin/${r.mint}`}
+                    rank={i + 1}
+                    image={r.image}
+                    name={r.name}
+                    symbol={r.symbol}
+                    sub={`${fmtAge(r.ageSeconds)} old`}
+                    figure={r.mcapSol !== null ? `${fmtSol(r.mcapSol)} SOL` : undefined}
+                    standing={r.percentile}
+                  />
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </section>
+
+      {/* Today's board */}
+      <section id="board" aria-label="Today's board" className="px-gutter py-section">
+        <BoardPanel leader={leader} coinsToday={rows?.length ?? 0} failed={rows === null} basis={preview && !ranked ? "holders" : "standing"} launchHref="#launch" />
+      </section>
+    </>
   );
 }
 
-const STEPS = [
-  { n: 1, title: "Launch", pill: "pill-teal", body: "Fill in a name, symbol and image. Your wallet signs one transaction and the coin is created on pump.fun, the same as launching there." },
-  { n: 2, title: "Measure", pill: "pill-yellow", body: "From the first five minutes, the coin is compared with others of exactly the same age: Yardstick launches and a sample of all pump.fun coins." },
-  { n: 3, title: "Improve", pill: "pill-coral", body: "Plain notes point at the metrics where your coin trails coins that went on to graduate, so you know what to look at next." },
-] as const;
-
-export default function Home() {
+/** Day one: six open slots (no stand-in coins) and the two ways in. */
+function EmptyTopCoins() {
   return (
-    <>
-      {/* Hero: full-strength cursor field. */}
-      <section data-field="full" className="px-gutter pt-section-sm pb-section-md">
-        <div className="mx-auto max-w-page">
-          <h1 className="text-[clamp(3rem,0.9rem+7.6vw,7.75rem)] leading-[1.06] font-extrabold tracking-[-0.045em]">
-            <span className="block">
-              <span className="pill pill-teal reveal-pill">Launch</span> <span className="reveal-word inline-block [--delay:120ms]">on pump.fun.</span>
+    <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-center lg:gap-14">
+      <ol aria-hidden className="grid grid-cols-3 gap-3 md:grid-cols-6 lg:grid-cols-3 xl:grid-cols-6">
+        {Array.from({ length: 6 }, (_, i) => (
+          <li key={i} className={`relative aspect-square rounded-2xl border border-dashed border-panel-muted/35 ${i >= 3 ? "max-md:hidden lg:max-xl:hidden" : ""}`}>
+            <span className="num absolute top-2 left-2 rounded-pill px-2 py-1 font-mono text-mono text-panel-muted shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--panel-muted)_35%,transparent)]">
+              {String(i + 1).padStart(2, "0")}
             </span>
-            <span className="block">
-              <span className="reveal-word inline-block [--delay:240ms]">See where</span>{" "}
-              <span className="pill pill-yellow reveal-pill [--delay:360ms]">you</span> <span className="reveal-word inline-block [--delay:480ms]">stand.</span>
-            </span>
-          </h1>
-
-          <div className="mt-12 grid gap-10 md:mt-16 md:grid-cols-12">
-            <div className="md:col-span-5">
-              <p className="text-lead text-muted">
-                <strong className="font-semibold text-ink">Is 140 holders after two hours good?</strong> Yardstick launches your coin on pump.fun, then shows how it compares with every other coin at
-                the same age, and what to look at next.
-              </p>
-              <p className="mt-4 text-sm font-semibold">Free. No platform fee. Non-custodial.</p>
-            </div>
-            <div className="space-y-6 md:col-span-6 md:col-start-7">
-              <Link href="/launch" className="btn btn-primary btn-lg">
-                Launch a coin <ArrowRight size={20} strokeWidth={2.25} aria-hidden />
-              </Link>
-              <CheckForm />
-            </div>
-          </div>
+          </li>
+        ))}
+      </ol>
+      <div className="flex flex-col items-start gap-5">
+        <p className="text-title">No launches yet today.</p>
+        <p className="text-small text-panel-muted">The first coin launched through Yardstick today takes the 01 spot. Coins are ranked by standing against pump.fun coins of the same age, and the list starts fresh at UTC midnight.</p>
+        <div className="flex flex-wrap gap-3">
+          <a href="#launch" className="btn btn-on-panel">
+            Launch a coin <ArrowUpRight size={16} aria-hidden />
+          </a>
+          <CheckCoinButton className="btn btn-panel-ghost" />
         </div>
-      </section>
-
-      {/* Today: live numbers, quiet field. */}
-      <section aria-labelledby="today-h" data-field="quiet" className="px-gutter py-section-sm">
-        <div className="mx-auto max-w-page">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <h2 id="today-h" className="text-headline">
-              Today on Yardstick
-            </h2>
-            <Link href="/today" className="inline-flex min-h-11 items-center gap-1.5 font-semibold text-teal-ink underline-offset-4 hover:underline">
-              See the full table <ArrowRight size={16} strokeWidth={2.25} aria-hidden />
-            </Link>
-          </div>
-          <div className="mt-6">
-            <TodayStrip />
-          </div>
-        </div>
-      </section>
-
-      {/* Three steps, numbered because they are a sequence. */}
-      <section aria-labelledby="how-h" className="px-gutter py-section-md">
-        <div className="mx-auto max-w-page">
-          <h2 id="how-h" className="text-display">
-            Launch <span className="text-muted">→</span> Measure <span className="text-muted">→</span> Improve
-          </h2>
-          <ol className="mt-12 grid gap-12 md:grid-cols-3 md:gap-8">
-            {STEPS.map((s) => (
-              <li key={s.n} className="flex flex-col">
-                <div className="flex items-center gap-4">
-                  <span className={`pill ${s.pill} num grid h-14 w-14 place-items-center p-0 text-title font-extrabold`} aria-hidden>
-                    {s.n}
-                  </span>
-                  <StepDots step={s.n} of={3} />
-                </div>
-                <h3 className="mt-5 text-headline">
-                  <span className="sr-only">Step {s.n}: </span>
-                  {s.title}
-                </h3>
-                <p className="mt-3 max-w-measure text-muted">{s.body}</p>
-                <div className="mt-6">
-                  <StepFigure step={s.n} />
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* Trust block. */}
-      <section aria-labelledby="trust-h" className="px-gutter py-section-sm">
-        <div className="mx-auto grid max-w-page gap-10 rounded-xl bg-ink p-8 text-page md:grid-cols-12 md:p-14">
-          <h2 id="trust-h" className="text-display md:col-span-6">
-            Free. <span className="pill pill-yellow">No fees.</span> Your coin lives on pump.fun.
-          </h2>
-          <ul className="space-y-5 text-lead md:col-span-5 md:col-start-8 md:self-end">
-            <li>Yardstick takes no fee, no share and no referral cut. You pay only Solana network fees and pump.fun&apos;s own creation cost, from your own wallet.</li>
-            <li>The site never holds your keys or funds and never asks for a recovery phrase. The new coin&apos;s key is made in your browser.</li>
-            <li>Your coin is a normal pump.fun coin: it trades there and appears there like any other.</li>
-          </ul>
-        </div>
-      </section>
-
-      {/* Closing: full-strength field again. */}
-      <section data-field="full" aria-labelledby="close-h" className="px-gutter pt-section-md pb-section-sm">
-        <div className="mx-auto max-w-page">
-          <h2 id="close-h" className="text-giant">
-            Where do <span className="pill pill-coral">you</span> stand?
-          </h2>
-          <div className="mt-10 flex flex-wrap gap-3">
-            <Link href="/launch" className="btn btn-primary btn-lg">
-              Launch a coin
-            </Link>
-            <Link href="/how" className="btn btn-secondary btn-lg">
-              How it measures
-            </Link>
-          </div>
-        </div>
-      </section>
-    </>
+      </div>
+    </div>
   );
 }

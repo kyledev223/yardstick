@@ -6,6 +6,7 @@ import { AlertTriangle, CircleCheck, Eye, ImagePlus, Info, Loader2 } from "lucid
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/providers";
+import { LaunchPreviewCard } from "@/components/launch-preview-card";
 import { WalletDialog } from "@/components/wallet-button";
 import { api, post, type ApiError } from "@/lib/client/api";
 import { LAUNCH } from "@/lib/config";
@@ -23,9 +24,9 @@ const PHASES: { key: Phase; label: string }[] = [
 ];
 
 const STATUS = {
-  good: { Icon: CircleCheck, word: "Good", cls: "bg-sunk text-up" },
-  look: { Icon: Eye, word: "Worth a look", cls: "bg-yellow text-on-pill" },
-  info: { Icon: Info, word: "Info", cls: "bg-sunk text-muted" },
+  good: { Icon: CircleCheck, word: "Good", cls: "tag-tint text-up" },
+  look: { Icon: Eye, word: "Worth a look", cls: "tag-accent" },
+  info: { Icon: Info, word: "Info", cls: "tag-tint text-muted" },
 } as const;
 
 function useDebounced<T>(value: T, ms: number): T {
@@ -184,37 +185,46 @@ export function LaunchForm() {
   }
 
   const inputCls = "field";
-  const fe = (k: string) => fieldErrors[k] && <p className="mt-1.5 text-sm font-medium text-down">{fieldErrors[k]}</p>;
+  const fe = (k: string) => fieldErrors[k] && <p className="mt-1.5 text-small font-medium text-down">{fieldErrors[k]}</p>;
+  const ready = Boolean(name.trim() && symbol.trim());
 
   return (
-    <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
+    <div className="card grid overflow-hidden lg:grid-cols-[1.15fr_0.85fr]">
       <form
-        className="space-y-7 rounded-xl bg-surface p-5 ring-1 ring-rule sm:p-8 lg:col-span-7"
+        className="space-y-8 p-6 sm:p-10"
         onSubmit={(e) => {
           e.preventDefault();
           if (!busy) run();
         }}
       >
-        <div className="grid gap-6 sm:grid-cols-[152px_1fr]">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="eyebrow">Yardstick launch studio</p>
+            <h2 className="mt-2 text-title">Make your coin</h2>
+          </div>
+          <span className="tag tag-tint">Free · no fees</span>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-[136px_1fr]">
           <div>
             <span className="label" id="img-label">
               Image
             </span>
-            <label className="group relative grid aspect-square w-full max-w-[152px] cursor-pointer place-items-center overflow-hidden rounded-lg border-2 border-dashed border-rule-strong bg-soft hover:border-ink focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-focus">
+            <label className="group relative grid aspect-square w-full max-w-[136px] cursor-pointer place-items-center overflow-hidden rounded-2xl border border-dashed border-rule-strong bg-tint transition-colors duration-(--dur-fast) hover:border-ink focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus">
               {preview ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={preview} alt="Selected coin image" className="h-full w-full object-cover" />
+                <img src={preview} alt="" className="h-full w-full object-cover" />
               ) : (
-                <span className="flex flex-col items-center gap-1.5 text-sm font-semibold text-muted">
-                  <ImagePlus size={26} strokeWidth={1.75} aria-hidden /> Add image
+                <span className="flex flex-col items-center gap-1.5 text-label font-medium text-muted">
+                  <ImagePlus size={22} strokeWidth={1.5} aria-hidden /> Add image
                 </span>
               )}
               <input type="file" accept={LAUNCH.imageTypes.join(",")} aria-labelledby="img-label" className="sr-only" onChange={(e) => setImage(e.target.files?.[0] ?? null)} />
             </label>
-            <p className="mt-2 text-micro text-muted">PNG, JPEG, WebP or GIF, up to 4 MB.</p>
+            <p className="help">PNG, JPEG, WebP or GIF, up to 4 MB.</p>
             {fe("image")}
           </div>
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
               <label htmlFor="name" className="label">
                 Name
@@ -227,7 +237,7 @@ export function LaunchForm() {
                 Symbol
               </label>
               <input id="symbol" className={`${inputCls} uppercase`} value={symbol} maxLength={LAUNCH.symbolMax} onChange={(e) => setSymbol(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))} required autoComplete="off" />
-              <p className="mt-1.5 text-micro text-muted">A–Z and 0–9, up to {LAUNCH.symbolMax} characters.</p>
+              <p className="help">A–Z and 0–9, up to {LAUNCH.symbolMax} characters.</p>
               {fe("symbol")}
             </div>
           </div>
@@ -238,7 +248,7 @@ export function LaunchForm() {
             Description <span className="font-normal text-muted">(optional)</span>
           </label>
           <textarea id="description" rows={3} className={inputCls} value={description} maxLength={LAUNCH.descriptionMax} onChange={(e) => setDescription(e.target.value)} />
-          <p className="num mt-1.5 text-right text-micro text-muted">
+          <p className="num help text-right">
             {description.length}/{LAUNCH.descriptionMax}
           </p>
           {fe("description")}
@@ -254,7 +264,7 @@ export function LaunchForm() {
             ["website", "Website", "https://…", website, setWebsite],
           ].map(([id, label, ph, val, set]) => (
             <div key={id as string}>
-              <label htmlFor={id as string} className="mb-1 block text-sm text-muted">
+              <label htmlFor={id as string} className="mb-1.5 block text-label text-muted">
                 {label as string}
               </label>
               <input id={id as string} type="url" inputMode="url" placeholder={ph as string} className={inputCls} value={val as string} onChange={(e) => (set as (v: string) => void)(e.target.value)} />
@@ -279,25 +289,25 @@ export function LaunchForm() {
             onChange={(e) => setDevBuy(e.target.value)}
             aria-describedby="devbuy-help"
           />
-          <p id="devbuy-help" className="mt-1.5 text-micro text-muted">
+          <p id="devbuy-help" className="help">
             Buys some of your coin in the same transaction, from your wallet. 0 means create only. Capped at {LAUNCH.devBuyMaxSol} SOL.
           </p>
           {devBuySol > 0 && (
-            <p className="mt-3 flex gap-3 rounded-lg bg-soft p-4 text-sm ring-2 ring-yellow">
+            <p className="mt-3 flex gap-3 rounded-xl bg-tint p-4 text-small shadow-[inset_0_0_0_1.5px_var(--accent)]">
               <AlertTriangle size={18} className="mt-0.5 shrink-0 text-ink" aria-hidden />
               <span>
                 This spends {devBuySol} SOL of real money on your own coin, on top of the creation cost. Its value can drop to zero. A dev buy also shows up in the creator-wallet and top-10 metrics.
               </span>
             </p>
           )}
-          {devBuySol > LAUNCH.devBuyMaxSol && <p className="mt-2 text-sm font-medium text-down">Dev buy is capped at {LAUNCH.devBuyMaxSol} SOL.</p>}
+          {devBuySol > LAUNCH.devBuyMaxSol && <p className="mt-2 text-small font-medium text-down">Dev buy is capped at {LAUNCH.devBuyMaxSol} SOL.</p>}
           {fe("devBuySol")}
         </div>
 
-        <div className="space-y-4 border-t border-rule pt-7">
-          <p className="text-sm text-muted">
-            This creates a real coin on <strong className="font-semibold text-ink">Solana mainnet</strong> with real SOL. You pay only the network fee and pump.fun&apos;s creation cost
-            {devBuySol > 0 ? ", plus your dev buy" : ""}, about {(LAUNCH.createCostSol + devBuySol * 1.01).toFixed(3)} SOL in total. Yardstick charges nothing.
+        <div className="space-y-4 border-t border-rule pt-8">
+          <p className="text-small text-muted">
+            This creates a real coin on <strong className="font-medium text-ink">Solana mainnet</strong> with real SOL. You pay only the network fee and pump.fun&apos;s creation cost
+            {devBuySol > 0 ? ", plus your dev buy" : ""}, about <span className="num">{(LAUNCH.createCostSol + devBuySol * 1.01).toFixed(3)}</span> SOL in total. Yardstick charges nothing.
           </p>
           {/* Without a wallet this is a plain button, so it opens the wallet picker even while the form is still empty. */}
           {!publicKey ? (
@@ -306,20 +316,20 @@ export function LaunchForm() {
             </button>
           ) : (
             <button type="submit" disabled={busy || devBuySol > LAUNCH.devBuyMaxSol || devBuySol < 0} className="btn btn-primary btn-lg w-full sm:w-auto">
-              {busy && <Loader2 size={18} className="animate-spin" aria-hidden />}
+              {busy && <Loader2 size={16} className="animate-spin" aria-hidden />}
               {busy ? (PHASES.find((p) => p.key === phase)?.label ?? "Working…") : error ? "Try again" : "Launch coin"}
             </button>
           )}
 
           {(busy || phase === "done") && (
-            <ol className="space-y-2 text-sm" aria-live="polite">
+            <ol className="space-y-2 text-small" aria-live="polite">
               {PHASES.map((p) => {
                 const idx = PHASES.findIndex((x) => x.key === phase);
                 const mine = PHASES.findIndex((x) => x.key === p.key);
                 const state = phase === "done" || mine < idx ? "done" : mine === idx ? "now" : "todo";
                 return (
-                  <li key={p.key} className={`flex items-center gap-3 ${state === "now" ? "font-semibold text-ink" : "text-muted"}`}>
-                    <span className={`h-3 shrink-0 rounded-pill ${state === "done" ? "w-3 bg-data-you" : state === "now" ? "w-7 bg-teal" : "w-3 bg-sunk ring-1 ring-rule-strong"}`} aria-hidden />
+                  <li key={p.key} className={`flex items-center gap-3 ${state === "now" ? "font-medium text-ink" : "text-muted"}`}>
+                    <span className={`h-2.5 shrink-0 rounded-pill ${state === "done" ? "w-2.5 bg-data-you" : state === "now" ? "w-6 bg-primary" : "w-2.5 bg-tint shadow-[inset_0_0_0_1px_var(--rule-strong)]"}`} aria-hidden />
                     <span className="sr-only">{state === "done" ? "Done: " : state === "now" ? "Now: " : "Next: "}</span>
                     {p.label}
                     {state === "now" && p.key === "approve" && <span className="text-muted"> (check the wallet pop-up)</span>}
@@ -330,8 +340,8 @@ export function LaunchForm() {
           )}
 
           {error && (
-            <div role="alert" className="rounded-lg bg-surface p-4 text-sm ring-2 ring-down">
-              <p className="font-semibold">{error.message}</p>
+            <div role="alert" className="rounded-xl bg-card p-4 text-small shadow-[inset_0_0_0_1.5px_var(--down)]">
+              <p className="font-medium">{error.message}</p>
               {error.code === "insufficient-sol" && cost && (
                 <p className="num mt-1 text-muted">
                   Balance {cost.balanceSol.toFixed(4)} SOL; needed about {cost.estimatedCostSol.toFixed(3)} SOL.
@@ -339,11 +349,11 @@ export function LaunchForm() {
               )}
               {error.code === "simulation-failed" && Array.isArray((error.details as { logs?: string[] })?.logs) && (
                 <details className="mt-2">
-                  <summary className="inline-flex min-h-10 cursor-pointer items-center font-semibold text-teal-ink">Program logs</summary>
-                  <pre className="addr mt-1 max-h-40 overflow-auto rounded-md bg-soft p-3 text-xs whitespace-pre-wrap text-muted">{((error.details as { logs: string[] }).logs ?? []).join("\n")}</pre>
+                  <summary className="link inline-flex min-h-10 cursor-pointer items-center">Program logs</summary>
+                  <pre className="addr mt-1 max-h-40 overflow-auto rounded-lg bg-tint p-3 text-xs whitespace-pre-wrap text-muted">{((error.details as { logs: string[] }).logs ?? []).join("\n")}</pre>
                 </details>
               )}
-              <p className="mt-2 text-micro text-muted">
+              <p className="mt-2 text-label text-muted">
                 Code: <span className="addr">{error.code}</span>
               </p>
             </div>
@@ -351,16 +361,22 @@ export function LaunchForm() {
         </div>
       </form>
 
-      <aside className="lg:col-span-5" aria-labelledby="checks-h">
-        <div className="rounded-xl bg-soft p-5 sm:p-8 lg:sticky lg:top-6">
-          <h2 id="checks-h" className="text-title">
+      <aside className="flex flex-col gap-10 bg-tint p-6 sm:p-10" aria-label="Launch preview and pre-launch check">
+        <div className="flex items-center justify-between font-mono text-mono tracking-[0.14em] text-muted uppercase">
+          <span>Launch preview</span>
+          <span>pump.fun</span>
+        </div>
+        <LaunchPreviewCard image={preview} name={name.trim()} symbol={symbol} description={description.trim()} />
+
+        <section aria-labelledby="checks-h" className="border-t border-rule pt-8">
+          <h2 id="checks-h" className="eyebrow">
             Pre-launch check
           </h2>
-          <p className="mt-2 text-sm text-muted">Updates as you type. Based on coins Yardstick has measured in the last 7 days.</p>
-          <ul className="mt-5 space-y-3" aria-live="polite">
+          <p className="mt-2 text-label text-muted">Updates as you type. Based on coins Yardstick has measured in the last 7 days.</p>
+          <ul className="mt-5 space-y-2" aria-live="polite">
             {checks === null
               ? [0, 1, 2, 3].map((i) => (
-                  <li key={i} className="rounded-lg bg-surface p-4 ring-1 ring-rule">
+                  <li key={i} className="card-sm p-4">
                     <div className="skeleton h-4 w-28" />
                     <div className="skeleton mt-3 h-3 w-full" />
                   </li>
@@ -368,19 +384,23 @@ export function LaunchForm() {
               : checks.map((c) => {
                   const s = STATUS[c.status];
                   return (
-                    <li key={c.id} className="rounded-lg bg-surface p-4 ring-1 ring-rule">
+                    <li key={c.id} className="card-sm p-4">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="font-semibold">{c.label}</span>
-                        <span className={`inline-flex min-h-7 shrink-0 items-center gap-1.5 rounded-pill px-2.5 text-micro font-bold ${s.cls}`}>
-                          <s.Icon size={14} strokeWidth={2.25} aria-hidden /> {s.word}
+                        <span className="text-small font-medium">{c.label}</span>
+                        <span className={`tag shrink-0 ${s.cls}`}>
+                          <s.Icon size={12} strokeWidth={2.25} aria-hidden /> {s.word}
                         </span>
                       </div>
-                      <p className="mt-1.5 text-sm text-muted">{c.text}</p>
+                      <p className="mt-1.5 text-label text-muted">{c.text}</p>
                     </li>
                   );
                 })}
           </ul>
-        </div>
+        </section>
+
+        <p className="mt-auto font-mono text-mono tracking-[0.12em] text-muted uppercase" aria-live="polite">
+          {ready ? "Ready when your wallet is" : "Add a name and symbol to launch"}
+        </p>
       </aside>
       <WalletDialog open={walletOpen} onClose={() => setWalletOpen(false)} />
     </div>
