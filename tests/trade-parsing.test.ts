@@ -1,7 +1,14 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
+import { pumpSdk } from "@/lib/pump";
 import { parsePumpTx, type RawTx } from "@/lib/pump-events";
+
+// parsePumpTx loads the pump SDK (a large CommonJS require) on first use. Load it once up front with its own
+// budget, so that cost isn't charged to the first test's 5s timeout on a busy machine.
+beforeAll(() => {
+  pumpSdk();
+}, 60_000);
 
 const dir = join(__dirname, "fixtures");
 const load = (name: string) => JSON.parse(readFileSync(join(dir, name), "utf8")) as RawTx & { signature: string };

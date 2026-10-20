@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const A = "https://mainnet.helius-rpc.com/?api-key=SECRET123";
 const B = "https://backup.example.com";
@@ -23,11 +23,29 @@ async function freshRpc() {
   return import("@/lib/rpc");
 }
 
+// The first import transforms rpc.ts and loads web3.js; do it once up front with its own budget, so it isn't
+// charged to the first test's 5s timeout on a busy machine (each test then re-imports a fresh copy cheaply).
+beforeAll(async () => {
+  await import("@/lib/rpc");
+}, 60_000);
+
+// Retry back-off uses setTimeout: fake it, so retries don't wait in real time. A slow, timed-out test could
+// otherwise keep retrying in the background and eat the next test's scripted replies.
 beforeEach(() => {
   process.env.SOLANA_RPC_URL = `${A},${B}`;
   delete process.env.HELIUS_API_KEY;
+  vi.useFakeTimers({ toFake: ["setTimeout"] });
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
+
+/** Lets a call run through its retry back-off without waiting. */
+async function settled<T>(p: Promise<T>): Promise<T> {
+  await vi.runAllTimersAsync();
+  return p;
+}
 
 describe("rpcCall fail-over", () => {
   it("retries once on 429, then fails over to the next endpoint", async () => {
@@ -36,7 +54,7 @@ describe("rpcCall fail-over", () => {
       "mainnet.helius-rpc.com": [{ status: 429 }, { status: 429 }],
       "backup.example.com": [{ body: { result: 42 } }],
     });
-    await expect(rpcCall("getSlot", [])).resolves.toBe(42);
+    await expect(settled(rpcCall("getSlot", []))).resolves.toBe(42);
     expect(calls).toEqual(["mainnet.helius-rpc.com", "mainnet.helius-rpc.com", "backup.example.com"]);
   });
 
@@ -50,7 +68,7 @@ describe("rpcCall fail-over", () => {
   it("retries network errors and timeouts", async () => {
     const { rpcCall } = await freshRpc();
     mockFetch({ "mainnet.helius-rpc.com": [{ throws: new TypeError("fetch failed") }, { body: { result: 1 } }] });
-    await expect(rpcCall("getSlot", [])).resolves.toBe(1);
+    await expect(settled(rpcCall("getSlot", []))).resolves.toBe(1);
   });
 
   it("does not retry real errors", async () => {
