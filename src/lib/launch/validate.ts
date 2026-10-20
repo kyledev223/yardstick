@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { LAUNCH } from "../config";
+import { findBannedTerm } from "../moderation";
 
 const optionalUrl = (hosts: string[] | null, label: string) =>
   z
@@ -53,11 +54,8 @@ export const launchFormSchema = z.object({
 
 export type LaunchForm = z.infer<typeof launchFormSchema>;
 
-export function containsBannedWord(...texts: (string | undefined)[]): string | null {
-  const hay = texts.filter(Boolean).join(" ").toLowerCase();
-  for (const w of LAUNCH.bannedWords) if (w && hay.includes(w.toLowerCase())) return w;
-  return null;
-}
+/** The first blocked word in the texts, or null. Lists and matching rules: MODERATION in src/lib/config.ts. */
+export const containsBannedWord = (...texts: (string | undefined)[]): string | null => findBannedTerm(...texts);
 
 export function validateImage(file: { type: string; size: number } | null): string | null {
   if (!file || file.size === 0) return "An image is required";

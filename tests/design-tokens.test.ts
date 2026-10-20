@@ -13,8 +13,8 @@ function block(re: RegExp): Record<string, string> {
   return tokens(m[1]);
 }
 
-// First top-level :root block: light theme.
-const light = block(/^:root \{([^}]*)\}/m);
+// First top-level :root block: light theme (shared with .surface-light, the light scope inside the dark theme).
+const light = block(/^:root,\s*\.surface-light \{([^}]*)\}/m);
 const darkSystem = block(/@media \(prefers-color-scheme: dark\) \{\s*:root:not\(\[data-theme="light"\]\) \{([^}]*)\}/);
 const darkChosen = block(/^:root\[data-theme="dark"\] \{([^}]*)\}/m);
 
@@ -35,7 +35,8 @@ function chroma(hex: string) {
   return Math.max(...c) - Math.min(...c);
 }
 
-const SURFACES = ["paper", "card", "tint"];
+// Every background that page text sits on, including the theme-dependent section backgrounds.
+const SURFACES = ["paper", "card", "tint", "section-deep", "section-quiet"];
 const TEXT = 4.5; // WCAG AA, normal text
 const GRAPHIC = 3; // WCAG AA, non-text UI and chart marks
 
@@ -51,6 +52,7 @@ const PAIRS: [string, string, number][] = [
     ["focus", bg, GRAPHIC],
     ["data-you", bg, GRAPHIC],
     ["data-median", bg, GRAPHIC],
+    ["accent-ink", bg, GRAPHIC], // coral lines, dots and glyphs
   ]),
   ["ink", "tint-strong", TEXT], // hovered pills and ghost buttons
   ["muted", "tint-strong", TEXT],
@@ -61,8 +63,13 @@ const PAIRS: [string, string, number][] = [
   ["on-panel", "panel", TEXT], // ink panels
   ["panel-muted", "panel", TEXT],
   ["panel-accent", "panel", TEXT],
+  ["on-panel", "section-ink", TEXT], // the full-bleed ink section
+  ["panel-muted", "section-ink", TEXT],
+  ["panel-accent", "section-ink", TEXT],
   ["panel", "on-panel", TEXT], // paper button on ink panels
   ["panel", "panel-accent", TEXT], // its hover
+  ["on-band", "band", TEXT], // the ultramarine band
+  ["on-band-muted", "band", TEXT],
   ["data-you", "data-range", GRAPHIC],
   ["data-you", "data-range-strong", GRAPHIC],
   ["data-median", "data-range", GRAPHIC],
@@ -70,7 +77,7 @@ const PAIRS: [string, string, number][] = [
 ];
 
 // Surfaces, lines and secondary text must carry colour: no neutral greys.
-const NO_GREY = ["paper", "tint", "tint-strong", "muted", "rule", "rule-strong", "panel", "panel-muted", "data-median", "data-range"];
+const NO_GREY = ["paper", "tint", "tint-strong", "muted", "rule", "rule-strong", "panel", "panel-muted", "data-median", "data-range", "section-ink", "section-deep", "section-quiet", "band", "on-band-muted"];
 
 describe("design tokens", () => {
   it("dark theme blocks for system preference and explicit choice are identical", () => {
@@ -96,6 +103,16 @@ describe("design tokens", () => {
       expect(chroma(theme[t])).toBeGreaterThanOrEqual(6);
     });
   }
+
+  it("the light scope inside the dark theme is the light block itself", () => {
+    expect(css).toMatch(/^:root,\s*\.surface-light \{/m);
+    expect(css).toMatch(/\.surface-light \{\s*background: var\(--paper\);\s*color: var\(--ink\);/);
+  });
+
+  it("the ultramarine band is the same colour in both themes", () => {
+    expect(darkChosen.band).toBe(light.band);
+    expect(darkChosen["on-band-muted"]).toBe(light["on-band-muted"]);
+  });
 
   it("body has an explicit background", () => {
     expect(css).toMatch(/body \{[^}]*background: var\(--paper\)/);

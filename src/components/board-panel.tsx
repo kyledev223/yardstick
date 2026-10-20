@@ -5,6 +5,7 @@ import { fmtInt, fmtPct } from "@/lib/format";
 import { CoinImage } from "./coin-image";
 import { CheckCoinButton } from "./command-search";
 import { Countdown } from "./countdown";
+import { EmptyRings } from "./visuals/empty-states";
 
 const statLabel = "font-mono text-mono tracking-[0.12em] text-muted uppercase";
 
@@ -56,10 +57,10 @@ export function BoardPanel({
   return (
     <div className="mx-auto grid max-w-page gap-16 lg:grid-cols-2 lg:items-center">
       <div className="relative mx-auto aspect-square w-full max-w-xl">
-        <div className="absolute inset-[8%] rounded-full border border-dashed border-rule-strong" aria-hidden />
-        <div className="absolute inset-[22%] rounded-full border border-rule" aria-hidden />
         {leader ? (
           <>
+            <div className="absolute inset-[8%] rounded-full border border-dashed border-rule-strong" aria-hidden />
+            <div className="absolute inset-[22%] rounded-full border border-rule" aria-hidden />
             <Link href={`/coin/${leader.mint}`} aria-label={`${leader.name} ($${leader.symbol})`} className="absolute top-1/2 left-1/2 block size-44 -translate-x-1/2 -translate-y-1/2 rotate-3 sm:size-56">
               <CoinImage src={leader.image} symbol={leader.symbol} size={224} className="size-full rounded-3xl text-6xl shadow-[0_20px_70px_var(--shadow)]" />
             </Link>
@@ -73,12 +74,7 @@ export function BoardPanel({
             </div>
           </>
         ) : (
-          <div className="absolute top-1/2 left-1/2 flex size-44 -translate-x-1/2 -translate-y-1/2 rotate-3 flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-rule-strong bg-card/60 p-6 text-center sm:size-56">
-            <Ruler size={22} className="text-muted" aria-hidden />
-            <span className="font-mono text-mono tracking-[0.12em] text-muted uppercase">
-              {state === "failed" ? "Couldn't load" : state === "measuring" ? "Measuring" : "No coins yet today"}
-            </span>
-          </div>
+          <EmptyRings label={state === "failed" ? "Couldn't load" : state === "measuring" ? "Measuring" : "No coins yet today"} className="absolute inset-0" />
         )}
       </div>
 

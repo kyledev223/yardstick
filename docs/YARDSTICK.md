@@ -82,7 +82,7 @@ Never commit secrets. `.env*` (except `.env.example`) and keypair files are giti
 | `session-wallet-mismatch` | Connected wallet ≠ signed-in wallet | Switch back, or sign in again with the new wallet |
 | `validation-failed` | A form field is invalid | The message lists the field |
 | `image-invalid` | Image couldn't be decoded | PNG/JPEG/WebP/GIF under 4 MB |
-| `banned-word` | Name/symbol/description has a blocked word | `LAUNCH.bannedWords` in `src/lib/config.ts` |
+| `banned-word` | Name/symbol/description has a blocked word | `MODERATION.bannedWords` / `bannedAnywhere` in `src/lib/config.ts` |
 | `rate-limited` | Too many prepares per wallet/IP per hour, or too many new-coin lookups per IP | Limits in `src/lib/config.ts`; wait an hour |
 | `metadata-upload-failed` | pump.fun's upload service (and Pinata, if set) refused the upload | `/status` → "Image and metadata upload" shows the last real upload; the reason is in `/api/health` → `checks.metadataUpload.last.error`. Set `PINATA_JWT` as a fallback |
 | `launch-not-found` / `launch-wrong-state` / `launch-expired` | The launch record isn't usable (already sent, or unsigned for 30 minutes) | Start the launch again |

@@ -7,6 +7,7 @@ import { CheckCoinButton } from "@/components/command-search";
 import { MetricBar, PercentileBar } from "@/components/percentile-bar";
 import { Sparkline } from "@/components/sparkline";
 import { TrajectoryChart } from "@/components/trajectory-chart";
+import { EmptyRings } from "@/components/visuals/empty-states";
 import { api, type ApiError } from "@/lib/client/api";
 import { DATA, pumpUrl, solscanToken, solscanTx, type GroupKey, type MetricKey } from "@/lib/config";
 import type { CoinView, GroupStanding, MetricCard } from "@/lib/data/dashboard";
@@ -168,11 +169,13 @@ export function CoinDashboard({ mint, initial, launchedSig }: { mint: string; in
           <div className="md:col-span-5">
             {!latest ? (
               <>
+                <EmptyRings className="mb-6 size-20" />
                 <p className="text-display">Measuring…</p>
                 <p className="mt-3 text-small text-muted">The first reading takes a few seconds. This page refreshes on its own.</p>
               </>
             ) : st.percentile === null ? (
               <>
+                <EmptyRings className="mb-6 size-20" />
                 <p className="text-display">Not enough data yet</p>
                 <p className="mt-3 text-small text-muted">{notEnoughText(st, group)}</p>
               </>
@@ -432,7 +435,10 @@ function TrajectoryPanel({ view, group }: { view: CoinView; group: GroupKey }) {
       </div>
       <div className="card mt-5 p-4 sm:p-6">
         {coin.length === 0 && view.trajectory.bands[group][metric].length === 0 ? (
-          <p className="py-6 text-small text-muted">No readings yet. The first fixed-age reading is at 5 minutes.</p>
+          <div className="flex items-center gap-5 py-6">
+            <EmptyRings className="size-16 shrink-0" />
+            <p className="text-small text-muted">No readings yet. The first fixed-age reading is at 5 minutes.</p>
+          </div>
         ) : (
           <TrajectoryChart coin={coin} band={view.trajectory.bands[group][metric]} metric={metric} groupLabel={GROUP_LABEL[group]} />
         )}

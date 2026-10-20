@@ -1,6 +1,7 @@
 import "server-only";
-import { type AgeBucketKey, type GroupKey, type MetricKey, METRICS } from "../config";
+import { type AgeBucketKey, DATA, type GroupKey, type MetricKey, METRICS } from "../config";
 import { db } from "../db";
+import { showInLiveStrip } from "../moderation";
 import type { Coin, Snapshot } from "@/generated/prisma/client";
 import { displayImage } from "./coins";
 import { loadAllDistributions, nearestBucket, standing, type DistMap } from "./distributions";
@@ -160,4 +161,38 @@ export async function searchCoins(q: string, limit = 8): Promise<(CoinChip & { s
     .sort((a, b) => rank(a) - rank(b))
     .slice(0, limit)
     .map((c) => ({ mint: c.mint, name: c.name, symbol: c.symbol, image: displayImage(c.imageUrl), source: c.source }));
+}
+
+export type LiveCoin = { mint: string; symbol: string; ageSeconds: number };
+
+/**
+ * Recently sampled pump.fun coins for the landing page's "Live on pump.fun" strip: symbol and age only (no images).
+ * Random memecoins, so each one must pass showInLiveStrip (no warning sign in its latest reading, no banned word,
+ * not on the hide list; see src/lib/moderation.ts).
+ */
+export async function livePumpCoins(limit = 24): Promise<LiveCoin[]> {
+  const coins = await db().coin.findMany({
+    where: { source: "baseline", createdAt: { gte: new Date(Date.now() - 86_400_000) } },
+    select: { mint: true, name: true, symbol: true, createdAt: true, snapshots: { select: { devSold: true, sniperPct: true }, orderBy: { takenAt: "desc" }, take: 1 } },
+    orderBy: { enrolledAt: "desc" },
+    take: limit * 4,
+  });
+  return coins
+    .filter((c) => showInLiveStrip({ ...c, latest: c.snapshots[0] }))
+    .slice(0, limit)
+    .map((c) => ({ mint: c.mint, symbol: c.symbol, ageSeconds: Math.round((Date.now() - c.createdAt.getTime()) / 1000) }));
+}
+
+export type BaselineWeek = { tracked: number; graduated: number; medianHolders1h: number | null; holders1hSample: number };
+
+/** The pump.fun baseline over the last 7 days. Callers hide a figure whose sample is under DATA.minSampleForPercentile. */
+export async function baselineWeek(): Promise<BaselineWeek> {
+  const since = new Date(Date.now() - 7 * 86_400_000);
+  const [tracked, graduated, oneHour] = await Promise.all([
+    db().coin.count({ where: { source: "baseline", createdAt: { gte: since } } }),
+    db().coin.count({ where: { source: "baseline", createdAt: { gte: since }, graduatedAt: { not: null } } }),
+    db().snapshot.findMany({ where: { ageBucket: "1h", holders: { not: null }, coin: { source: "baseline", createdAt: { gte: since } } }, select: { holders: true } }),
+  ]);
+  const hs = oneHour.map((s) => s.holders!);
+  return { tracked, graduated, medianHolders1h: hs.length >= DATA.minSampleForPercentile ? median(hs) : null, holders1hSample: hs.length };
 }

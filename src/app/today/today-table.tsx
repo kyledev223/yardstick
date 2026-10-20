@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CoinImage } from "@/components/coin-image";
 import { CheckCoinButton } from "@/components/command-search";
+import { EmptyPodium } from "@/components/visuals/empty-states";
 import { PercentileBar } from "@/components/percentile-bar";
 import { api } from "@/lib/client/api";
 import { AGE_BUCKETS, type AgeBucketKey, type GroupKey } from "@/lib/config";
@@ -100,7 +101,8 @@ export function TodayTable() {
           </div>
         ) : shown.length === 0 ? (
           <div className="card flex flex-wrap items-center justify-between gap-6 p-6 md:p-8">
-            <div className="max-w-xl">
+            <EmptyPodium tone="page" className="w-full max-w-64 shrink-0" />
+            <div className="max-w-xl flex-1">
               <p className="text-title">{graduated ? "No graduated Yardstick launches in this range yet." : range === "today" ? "No launches yet today. Be the first." : "No launches in the last 7 days."}</p>
               <p className="mt-2 text-small text-muted">
                 {graduated ? "A coin graduates when its bonding curve fills." : "The table starts fresh at UTC midnight."} Launch a coin to put it on the board, or check where any pump.fun coin stands.

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { CoinCard } from "@/components/coin-card";
 import { CheckCoinButton } from "@/components/command-search";
+import { EmptyRings } from "@/components/visuals/empty-states";
 import { isWallet } from "@/lib/auth";
 import { hasDatabase } from "@/lib/db";
 import { creatorProfile } from "@/lib/data/lists";
@@ -54,7 +55,8 @@ export default async function CreatorPage({ params }: PageProps<"/creator/[walle
 
       {data.coins.length === 0 ? (
         <div className="card mt-16 flex flex-wrap items-center justify-between gap-6 p-6 md:p-8">
-          <div className="max-w-xl">
+          <EmptyRings className="size-28 shrink-0" />
+          <div className="max-w-xl flex-1">
             <p className="text-title">No coins launched through Yardstick from this wallet yet.</p>
             <p className="mt-2 text-small text-muted">Coins this wallet launches here show up on this page with their best standing. To look at a coin launched elsewhere, check it by its address.</p>
           </div>

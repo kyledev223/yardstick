@@ -44,7 +44,34 @@ export const LAUNCH = {
   pendingExpiryMinutes: 30,
   prepareLimitPerHourWallet: 10,
   prepareLimitPerHourIp: 20,
-  bannedWords: [] as string[],
+};
+
+// ---- Moderation ----
+// Edit these lists to change what the site blocks and hides. Changes take effect on the next deploy.
+// Matching ignores case, accents, spacing between letters ("s e x"), look-alike characters (0/o, 1/i/l, 3/e,
+// 4/a, 5/s, $, @, Cyrillic and Greek look-alikes), stretched letters ("niiigger") and simple plurals.
+// Used by launch validation (name, symbol, description) and the "Live on pump.fun" strip (name, symbol).
+export const MODERATION = {
+  /** Whole words and phrases. "sex" blocks "sex" and "s3x", not "Sussex". */
+  bannedWords: [
+    // racial and ethnic slurs
+    "nigger", "nigga", "negro", "coon", "chink", "gook", "spic", "wetback", "beaner", "kike", "raghead", "towelhead",
+    "paki", "jigaboo", "porchmonkey", "zipperhead", "wop", "sambo",
+    // slurs about sexuality, gender and disability
+    "faggot", "fag", "dyke", "tranny", "shemale", "retard",
+    // hate terms
+    "nazi", "hitler", "heil", "sieg heil", "white power", "white pride", "1488", "kkk", "gas the jews", "white genocide",
+    // sexual terms
+    "porn", "porno", "sex", "cum", "cumshot", "rape", "rapist", "pedo", "pedophile", "paedo", "paedophile", "loli",
+    "lolicon", "hentai", "nude", "nsfw", "anal", "blowjob", "handjob", "dick", "cock", "pussy", "tits", "milf",
+    "incest", "bestiality", "xxx", "child porn",
+  ],
+  /** Also blocked inside longer words ("…coin", "the…"), so only terms that never occur inside ordinary words. */
+  bannedAnywhere: ["nigger", "nigga", "faggot", "hitler", "porn", "hentai", "pedophil", "paedophil", "childporn", "lolicon"],
+  /** Mints never shown in the "Live on pump.fun" strip. Add a mint here to remove a coin from it. */
+  hiddenMints: [] as string[],
+  /** Coins whose latest reading shows a sniper share above this (% of supply) are left out of the strip. */
+  maxSniperPct: 20,
 };
 
 // ---- Snapshots ----

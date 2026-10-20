@@ -17,7 +17,9 @@ export function SiteFooter() {
     <footer className="overflow-hidden bg-tint px-gutter pt-section">
       <div className="mx-auto flex max-w-page flex-col items-center gap-6 text-center">
         <p className="eyebrow">Compared at the same age</p>
-        <h2 className="max-w-3xl text-cta">Where does your coin stand?</h2>
+        <h2 className="max-w-3xl text-cta">
+          Where does your coin <span className="accent-mark">stand</span>?
+        </h2>
         <p className="max-w-md text-small text-muted">Launch on pump.fun from your own wallet, or paste any coin&apos;s address, and see how it compares with coins of exactly the same age.</p>
         <div className="flex flex-col items-center gap-3 sm:flex-row">
           <Link href="/launch" className="btn btn-primary">

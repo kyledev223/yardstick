@@ -6,6 +6,10 @@ import { connection } from "next/server";
 import { BoardPanel } from "@/components/board-panel";
 import { CoinCard } from "@/components/coin-card";
 import { CoinStrip } from "@/components/coin-strip";
+import { LiveStrip, LIVE_STRIP_MIN } from "@/components/live-strip";
+import { MeasureGlyphs, PercentileDiagram, SameAgeDiagram } from "@/components/visuals/diagrams";
+import { EmptyPodium, EmptyRings } from "@/components/visuals/empty-states";
+import { HeroScale } from "@/components/visuals/hero-scale";
 import { CheckCoinButton, SearchPill } from "@/components/command-search";
 import { Countdown } from "@/components/countdown";
 import { LaunchPreviewCard } from "@/components/launch-preview-card";
@@ -13,8 +17,9 @@ import { SectionHead } from "@/components/page-head";
 import { StepList } from "@/components/step-list";
 import { db, hasDatabase } from "@/lib/db";
 import { displayImage } from "@/lib/data/coins";
-import { leaderboard, type CoinChip, type RankRow } from "@/lib/data/lists";
+import { leaderboard, livePumpCoins, type CoinChip, type LiveCoin, type RankRow } from "@/lib/data/lists";
 import { fmtSol } from "@/lib/format";
+import { Replay } from "./replay";
 
 // Dev-only style guide: every design token and component in one place. 404 in production.
 // Component demos use real coins from the database (never made-up ones); without a database they show their empty states.
@@ -35,6 +40,13 @@ const USES: Record<string, string> = {
   "primary-ink": "Primary as text: standing number, links, your coin",
   accent: "Second accent: tags, badges, chips. Fill only",
   "on-accent": "Text on the accent",
+  "accent-ink": "Coral for thin marks on light surfaces: diagram lines, dots, glyphs",
+  band: "The ultramarine band (“How it works”), same in both themes",
+  "on-band": "Text on the band",
+  "on-band-muted": "Secondary text on the band",
+  "section-ink": "“Today's top coins” (ink in both themes)",
+  "section-deep": "“Today's board”: page colour in light, deep ink in dark",
+  "section-quiet": "“What we measure”: tint in light, deep ink in dark",
   panel: "Ink panels and full-bleed ink sections",
   "panel-edge": "Border of ink panels (visible in dark)",
   "on-panel": "Text on ink panels",
@@ -53,7 +65,7 @@ const USES: Record<string, string> = {
 function themes() {
   const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
   const parse = (body = "") => Object.fromEntries([...body.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6})\s*;/gi)].map(([, k, v]) => [k, v]));
-  return { light: parse(css.match(/^:root \{([^}]*)\}/m)?.[1]), dark: parse(css.match(/^:root\[data-theme="dark"\] \{([^}]*)\}/m)?.[1]) };
+  return { light: parse(css.match(/^:root,\s*\.surface-light \{([^}]*)\}/m)?.[1]), dark: parse(css.match(/^:root\[data-theme="dark"\] \{([^}]*)\}/m)?.[1]) };
 }
 
 function luminance(hex: string) {
@@ -87,6 +99,10 @@ const MOTION: [string, string, string][] = [
   ["--dur-float", "7s", "One bob of a floating hero card (ease-in-out, infinite)"],
   ["--float-distance", "−14px", "How far a floating card rises"],
   ["--float-stagger", "−1.3s", "Phase offset between floating cards"],
+  ["HeroScale", "~30 fps canvas", "Bars grow in over 1.2s, then breathe slowly; paused off screen and in background tabs"],
+  ["Diagrams", "1–4s, once", "Play once when 45% in view; reduced motion shows the last frame"],
+  ["--marquee-dur", "3.5s per coin", "pump.fun strip; pauses on hover, focus and its pause button"],
+  ["Empty states", "2.8s pulse · 3.2s rise · 120s dial", "Coral marker pulse, podium bars, slow dial"],
   ["scroll-behavior", "smooth", "Anchor links; instant under reduced motion"],
 ];
 
@@ -97,7 +113,9 @@ export default async function DesignPage() {
 
   let coins: CoinChip[] = [];
   let rows: RankRow[] = [];
+  let live: LiveCoin[] = [];
   if (hasDatabase()) {
+    live = await livePumpCoins().catch(() => []);
     const found = await db()
       .coin.findMany({ where: { imageUrl: { not: null } }, select: { mint: true, name: true, symbol: true, imageUrl: true }, orderBy: { createdAt: "desc" }, take: 12 })
       .catch(() => []);
@@ -309,9 +327,71 @@ export default async function DesignPage() {
         <BoardPanel leader={rows.find((r) => r.percentile !== null) ?? null} coinsToday={rows.length} />
       </section>
 
+      <section className="mt-24" aria-labelledby="visuals-h">
+        <h2 id="visuals-h" className="eyebrow">
+          Visuals · drawn in code, no data on them
+        </h2>
+        <div className="relative isolate mt-4 h-80 overflow-hidden rounded-card shadow-[inset_0_0_0_1px_var(--rule)]">
+          <div className="grain" aria-hidden />
+          <div className="glow-primary inset-x-[6%] -bottom-1/3 h-3/4" aria-hidden />
+          <HeroScale className="fade-x absolute inset-x-0 bottom-0 h-3/4 w-full" />
+          <p className="relative p-6 text-display">
+            HeroScale, <span className="accent-mark">accent-mark</span>, grain.
+          </p>
+        </div>
+        <div className="surface-light mt-4 grid gap-4 rounded-card bg-band p-4 sm:p-6 lg:grid-cols-2">
+          <div className="rounded-card bg-card p-6">
+            <Replay>
+              <SameAgeDiagram />
+            </Replay>
+          </div>
+          <div className="rounded-card bg-card p-6">
+            <Replay>
+              <PercentileDiagram />
+            </Replay>
+          </div>
+        </div>
+        <div className="relative isolate mt-4 overflow-hidden rounded-card bg-section-quiet p-6 sm:p-10">
+          <div className="ruler-ticks" aria-hidden />
+          <Replay>
+            <MeasureGlyphs
+              measures={[
+                { label: "Holders", text: "Dots pop in, a ring marks the top wallets." },
+                { label: "Buying and selling", text: "Buys rise, sells drop." },
+                { label: "Bonding curve", text: "The curve draws up to a flag." },
+                { label: "Warning signs", text: "A triangle draws, one coral pulse." },
+              ]}
+            />
+          </Replay>
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="rounded-card bg-section-ink p-6 text-on-panel">
+            <EmptyPodium className="w-full" />
+            <p className="mt-3 font-mono text-mono text-panel-muted uppercase">EmptyPodium · panel</p>
+          </div>
+          <div className="card p-6">
+            <EmptyPodium tone="page" className="w-full" />
+            <p className="mt-3 font-mono text-mono text-muted uppercase">EmptyPodium · page</p>
+          </div>
+          <div className="card p-6">
+            <EmptyRings label="No coins yet today" className="mx-auto aspect-square w-full max-w-64" />
+            <p className="mt-3 font-mono text-mono text-muted uppercase">EmptyRings</p>
+          </div>
+        </div>
+        <div className="mt-4 overflow-hidden rounded-card shadow-[inset_0_0_0_1px_var(--rule)]">
+          {live.length >= LIVE_STRIP_MIN ? (
+            <LiveStrip coins={live} />
+          ) : (
+            <p className="p-6 text-small text-muted">
+              LiveStrip: {live.length} sampled pump.fun coins pass the filters; it shows from {LIVE_STRIP_MIN}.
+            </p>
+          )}
+        </div>
+      </section>
+
       <section className="mt-24 mb-24" aria-labelledby="motion-h">
         <h2 id="motion-h" className="eyebrow">
-          Motion · there are no scroll reveals and no page-load animation
+          Motion · every effect stops under reduced motion
         </h2>
         <table className="mt-4 w-full text-left text-small">
           <tbody>
